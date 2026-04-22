@@ -20,6 +20,7 @@
 
 #include "swift/AST/ASTAllocated.h"
 #include "swift/AST/AutoDiff.h"
+#include "swift/AST/Concurrency.h"
 #include "swift/AST/DeclContext.h"
 #include "swift/AST/DiagnosticEngine.h"
 #include "swift/AST/ExtInfo.h"
@@ -1014,7 +1015,7 @@ public:
 
   /// Returns the diagnostic behavior for a specific nominal type handling
   /// whether or not the type has preconcurrency applied to it.
-  std::optional<DiagnosticBehavior>
+  ConcurrencyDiagnosticBehavior
   getConcurrencyDiagnosticBehaviorLimit(DeclContext *ctx) const;
 
   /// Determines whether this type conforms or inherits (if it's a protocol

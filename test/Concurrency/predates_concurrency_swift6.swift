@@ -64,12 +64,14 @@ func testElsewhere(x: X) {
 func testCalls(x: X) {
   // expected-note@-1 2{{add '@MainActor' to make global function 'testCalls(x:)' part of global actor 'MainActor'}}
   onMainActorAlways() // expected-warning{{call to main actor-isolated global function 'onMainActorAlways()' in a synchronous nonisolated context}}
+  // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
 
   let _: () -> Void = onMainActorAlways // expected-error{{converting function value of type '@MainActor @Sendable () -> ()' to '() -> Void' loses global actor 'MainActor'}}
 
   let c = MyModelClass() // okay, synthesized init() is 'nonisolated'
 
   c.f() // expected-warning{{call to main actor-isolated instance method 'f()' in a synchronous nonisolated context}}
+  // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
 }
 
 func testCallsWithAsync() async {
@@ -92,10 +94,12 @@ class NS { } // expected-note 5{{class 'NS' does not conform to the 'Sendable' p
 
 struct S1: P {
   var ns: NS // expected-warning{{stored property 'ns' of 'Sendable'-conforming struct 'S1' has non-Sendable type 'NS'}}
+  // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
 }
 
 struct S2: Q {
   var ns: NS // expected-warning{{stored property 'ns' of 'Sendable'-conforming struct 'S2' has non-Sendable type 'NS'}}
+  // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
 }
 
 struct S3: Q, Sendable {
@@ -206,9 +210,11 @@ extension UnavailableSendable: @unchecked Sendable {}
 
 typealias T = RequireSendable<NotSendable>
 // expected-warning@-1 {{type 'NotSendable' does not conform to the 'Sendable' protocol}}
+// expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
 typealias T2 = RequireSendable<UnavailableSendable>
 // expected-warning@-1 {{conformance of 'UnavailableSendable' to 'Sendable' is unavailable}}
+// expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
 class C {
   @preconcurrency
@@ -221,21 +227,27 @@ class C {
 func testRequirementDowngrade(ns: NotSendable, us: UnavailableSendable, c: C) {
   requireSendable(ns)
   // expected-warning@-1 {{type 'NotSendable' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   c.requireSendable(ns)
   // expected-warning@-1 {{type 'NotSendable' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   C.requireSendableStatic(ns)
   // expected-warning@-1 {{type 'NotSendable' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   requireSendable(us)
   // expected-warning@-1 {{conformance of 'UnavailableSendable' to 'Sendable' is unavailable}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   c.requireSendable(us)
   // expected-warning@-1 {{conformance of 'UnavailableSendable' to 'Sendable' is unavailable}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   C.requireSendableStatic(us)
   // expected-warning@-1 {{conformance of 'UnavailableSendable' to 'Sendable' is unavailable}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 }
 
 
@@ -261,21 +273,27 @@ extension C {
 func testErasureDowngrade(ns: NotSendable, us: UnavailableSendable, c: C) {
   requireSendableExistential(ns)
   // expected-warning@-1 {{type 'NotSendable' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   c.requireSendableExistential(ns)
   // expected-warning@-1 {{type 'NotSendable' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   C.requireSendableExistentialStatic(ns)
   // expected-warning@-1 {{type 'NotSendable' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   requireSendableExistential(us)
   // expected-warning@-1 {{conformance of 'UnavailableSendable' to 'Sendable' is unavailable}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   c.requireSendableExistential(us)
   // expected-warning@-1 {{conformance of 'UnavailableSendable' to 'Sendable' is unavailable}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   C.requireSendableExistentialStatic(us)
   // expected-warning@-1 {{conformance of 'UnavailableSendable' to 'Sendable' is unavailable}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   withSendableClosure {
     let ns = NotSendable()
@@ -295,6 +313,7 @@ do {
   let data: [String: Any] = [:]
   d.merge(data, uniquingKeysWith: { _, rhs in rhs})
   // expected-warning@-1 {{type 'Any' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 
   struct Test {
     @preconcurrency var info: [String: any Sendable] = [:]
@@ -303,24 +322,29 @@ do {
   func test(s: inout Test) {
     s.info["hello"] = { }
     // expected-warning@-1 {{type '() -> ()' does not conform to the 'Sendable' protocol}}
-    // expected-note@-2 {{a function type must be marked '@Sendable' to conform to 'Sendable'}}
+    // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+    // expected-note@-3 {{a function type must be marked '@Sendable' to conform to 'Sendable'}}
   }
 
   // If destination is @preconcurrency the Sendable conformance error should be downgraded
   d = data // expected-warning {{type 'Any' does not conform to the 'Sendable' protocol}}
+  // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
 }
 
 do {
   final class Mutating: P {
     var state: Int = 0 // expected-warning {{stored property 'state' of 'Sendable'-conforming class 'Mutating' is mutable}}
+    // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
   }
 
   struct StructWithInit: P {
     let prop = NS() // expected-warning {{stored property 'prop' of 'Sendable'-conforming struct 'StructWithInit' has non-Sendable type 'NS'}}
+    // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
   }
 
   enum E : P {
     case test(NS) // expected-warning {{associated value 'test' of 'Sendable'-conforming enum 'E' has non-Sendable type 'NS'}}
+    // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
   }
 }
 
@@ -331,6 +355,7 @@ func testSendableMetatypeDowngrades() {
 
   func testWarning<T>(t: T.Type) { // expected-note 2 {{consider making generic parameter 'T' conform to the 'SendableMetatype' protocol}} {{21-21=: SendableMetatype}}
     acceptsSendableMetatype(t) // expected-warning {{type 'T' does not conform to the 'SendableMetatype' protocol}}
+    // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
     acceptsSendableMetatypeStrict(t) // expected-error {{type 'T' does not conform to the 'SendableMetatype' protocol}}
   }
 
@@ -360,6 +385,7 @@ do {
       f {
         _ = self.env.v
         // expected-warning@-1 {{main actor-isolated property 'env' can not be referenced from a Sendable closure}}
+        // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
       }
     }
 
@@ -367,6 +393,7 @@ do {
       f {
         self.onMain()
         // expected-warning@-1 {{call to main actor-isolated instance method 'onMain()' in a synchronous nonisolated context}}
+        // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
       }
     }
   }
@@ -378,6 +405,7 @@ do {
       f {
         _ = self.env.v
         // expected-warning@-1 {{capture of 'self' with non-Sendable type 'Test' in a '@Sendable' closure}}
+        // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
       }
     }
   }

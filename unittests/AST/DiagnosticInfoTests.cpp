@@ -12,6 +12,7 @@
 
 #include "swift/AST/DiagnosticEngine.h"
 #include "swift/AST/DiagnosticGroups.h"
+#include "swift/AST/DiagnosticsCommon.h"
 #include "swift/AST/DiagnosticsFrontend.h"
 #include "swift/AST/DiagnosticsModuleDiffer.h"
 #include "swift/AST/DiagnosticsSema.h"
@@ -229,6 +230,42 @@ TEST(DiagnosticInfo, CategoryAPIDigesterBreakage) {
         EXPECT_EQ(info.getCategoryName(), "api-digester-breaking-change");
       },
       /*expectedNumCallbackCalls=*/3);
+}
+
+TEST(DiagnosticInfo, PrintDiagnosticNamesMode_Group_ChildNote) {
+  // Test that child notes with a diagnostic group get their CategoryChain
+  // populated.
+  testCase(
+      [](DiagnosticEngine &diags) {
+        diags.setDiagnosticDocumentationPath("https://docs.swift.org/");
+        // The preconcurrency note only fires in Swift 6+.
+        diags.setLanguageVersion(version::Version({6}));
+
+        // Emit a warning with a grouped child note via
+        // limitBehaviorWithPreconcurrency.
+        TestDiagnostic diagnostic(
+            diag::warn_unsupported_module_interface_library_evolution.ID,
+            DiagGroupID::no_group);
+        diags.diagnose(SourceLoc(), diagnostic)
+            .limitBehaviorWithPreconcurrency(DiagnosticBehavior::Warning,
+                                             /*preconcurrency=*/true);
+      },
+      [](DiagnosticEngine &, const DiagnosticInfo &info) {
+        // Child notes fire twice: attached to parent, and standalone for
+        // consumers that ignore grouping.
+        if (info.IsChildNote) {
+          EXPECT_EQ(info.getCategoryName(), "PreconcurrencyDowngrade");
+          EXPECT_FALSE(info.getCategoryDocumentationURL().empty());
+          return;
+        }
+
+        ASSERT_EQ(info.ChildDiagnosticInfo.size(), 1u);
+
+        auto &child = *info.ChildDiagnosticInfo[0];
+        EXPECT_EQ(child.getCategoryName(), "PreconcurrencyDowngrade");
+        EXPECT_FALSE(child.getCategoryDocumentationURL().empty());
+      },
+      /*expectedNumCallbackCalls=*/2);
 }
 
 } // end anonymous namespace

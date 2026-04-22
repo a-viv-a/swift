@@ -20,6 +20,7 @@
 #include "swift/AST/ASTBridging.h"
 #include "swift/AST/ASTContext.h"
 #include "swift/AST/ASTPrinter.h"
+#include "swift/AST/Concurrency.h"
 #include "swift/AST/Decl.h"
 #include "swift/AST/DiagnosticGroups.h"
 #include "swift/AST/DiagnosticList.h"
@@ -494,6 +495,72 @@ InFlightDiagnostic::limitBehaviorUntilLanguageMode(DiagnosticBehavior limit,
     if (auto stats = Engine->statsReporter) {
       ++stats->getFrontendCounters().NumSwift6Errors;
     }
+  }
+
+  return *this;
+}
+
+InFlightDiagnostic &InFlightDiagnostic::limitBehaviorWithPreconcurrency(
+    DiagnosticBehavior limit, bool preconcurrency, LanguageMode mode) {
+  if (preconcurrency) {
+    // Only attribute the downgrade to @preconcurrency if the language mode
+    // alone wouldn't have downgraded it (i.e., we're in or past the mode
+    // where this becomes an error).
+    if (mode.isEffectiveIn(Engine->languageVersion)) {
+      Diagnostic note(diag::note_preconcurrency_downgrade,
+                      static_cast<unsigned>(limit.kind), false);
+      note.setLoc(getDiag().getLocOrDeclLoc());
+      note.setIsChildNote(true);
+      getDiag().addChildNote(std::move(note));
+    }
+    return limitBehavior(limit);
+  }
+
+  return limitBehaviorUntilLanguageMode(limit, mode);
+}
+
+InFlightDiagnostic &InFlightDiagnostic::limitBehaviorForConcurrency(
+    const ConcurrencyDiagnosticBehavior &concurrencyBehavior) {
+  auto languageStaging = concurrencyBehavior.getLanguageStaging();
+  // Language staging DiagnosticBehavior was merged without checking if the
+  // language version was effective, based on the invariant that it is always a
+  // future version. If that isn't the case, our merged DiagnosticBehavior will
+  // be too relaxed.
+  ASSERT((!languageStaging ||
+          !languageStaging->until.isEffectiveIn(
+              Engine->languageVersion)) &&
+         "languageStaging.until should be a language version that is not yet "
+         "effective");
+
+  if (concurrencyBehavior.isIgnored())
+    return limitBehavior(DiagnosticBehavior::Ignore);
+
+  // Compute the merged limit (least-severe wins) across whichever
+  // contributions are populated.
+  DiagnosticBehavior limit =
+      concurrencyBehavior.merged().value_or(DiagnosticBehavior::Unspecified);
+
+  bool hasStaging = languageStaging.has_value();
+  bool hasPreconcurrency = concurrencyBehavior.getPreconcurrency().has_value();
+
+  // Only language staging applies: wrap the diagnostic with the
+  // "this will be an error in <mode>" framing and apply the limit.
+  if (hasStaging && !hasPreconcurrency) {
+    return limitBehaviorUntilLanguageMode(
+        limit, languageStaging->until);
+  }
+
+  // Preconcurrency applies (with or without staging). In Swift 6+, attribute
+  // the downgrade with a note, and report if language staging applies.
+  if (hasPreconcurrency) {
+    if (LanguageMode::v6.isEffectiveIn(Engine->languageVersion)) {
+      Diagnostic note(diag::note_preconcurrency_downgrade,
+                      static_cast<unsigned>(limit.kind), hasStaging);
+      note.setLoc(getDiag().getLocOrDeclLoc());
+      note.setIsChildNote(true);
+      getDiag().addChildNote(std::move(note));
+    }
+    return limitBehavior(limit);
   }
 
   return *this;

@@ -4550,7 +4550,7 @@ ConformanceChecker::resolveWitnessViaLookup(ValueDecl *requirement) {
                         [DC, requirement, witness, sendFrom, nominal](
                           NormalProtocolConformance *conformance) {
           diagnoseSendabilityErrorBasedOn(conformance->getProtocol(), sendFrom,
-                                          [&](DiagnosticBehavior limit) {
+                                          [&](ConcurrencyDiagnosticBehavior limit) {
             auto &diags = DC->getASTContext().Diags;
             auto preconcurrencyBehaviorLimit =
                 sendFrom.preconcurrencyBehavior(nominal);
@@ -4558,11 +4558,10 @@ ConformanceChecker::resolveWitnessViaLookup(ValueDecl *requirement) {
                 .diagnose(getLocForDiagnosingWitness(conformance, witness),
                           diag::witness_not_as_sendable, witness,
                           conformance->getProtocol())
-                .limitBehaviorUntilLanguageMode(limit, LanguageMode::v6)
-                .limitBehaviorIf(preconcurrencyBehaviorLimit);
+                .limitBehaviorForConcurrency(
+                    limit.merge(preconcurrencyBehaviorLimit));
             diags.diagnose(requirement, diag::less_sendable_reqt_here);
-            return preconcurrencyBehaviorLimit &&
-                   (*preconcurrencyBehaviorLimit == DiagnosticBehavior::Ignore);
+            return preconcurrencyBehaviorLimit.isIgnored();
           });
         });
       }

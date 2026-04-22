@@ -31,9 +31,9 @@ func test(
   ssc: SomeSendableClass,
   mpcc: MyPredatesConcurrencyClass
 ) async {
-  acceptSendable(ss) // expected-warning{{type 'StrictStruct' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
+  acceptSendable(ss) // expected-warning{{type 'StrictStruct' does not conform to the 'Sendable' protocol}}
   acceptSendable(ns) // silence issue entirely
-  acceptSendable(ssOpt) // expected-warning{{type 'StrictStruct' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
+  acceptSendable(ssOpt) // expected-warning{{type 'StrictStruct' does not conform to the 'Sendable' protocol}}
   acceptSendable(nsOpt) // silence issue entirely
   acceptSendable(oma) // okay
   acceptSendable(ssc) // okay
@@ -42,7 +42,7 @@ func test(
 
 let nonStrictGlobal = NonStrictClass() // no warning
 
-let strictGlobal = StrictStruct() // expected-warning{{let 'strictGlobal' is not concurrency-safe because non-'Sendable' type 'StrictStruct' may have shared mutable state; this is an error in the Swift 6 language mode}}
+let strictGlobal = StrictStruct() // expected-warning{{let 'strictGlobal' is not concurrency-safe because non-'Sendable' type 'StrictStruct' may have shared mutable state}}
 // expected-note@-1{{disable concurrency-safety checks if accesses are protected by an external synchronization mechanism}}
 // expected-note@-2{{add '@MainActor' to make let 'strictGlobal' part of global actor 'MainActor'}}
 
@@ -51,7 +51,7 @@ extension NonStrictClass {
 }
 
 extension StrictStruct {
-  @Sendable func f() { } // expected-warning{{instance method of non-Sendable type 'StrictStruct' cannot be marked as '@Sendable'; this is an error in the Swift 6 language mode}}
+  @Sendable func f() { } // expected-warning{{instance method of non-Sendable type 'StrictStruct' cannot be marked as '@Sendable'}}
 }
 
 
@@ -59,8 +59,8 @@ struct HasStatics {
   nonisolated static let ns: NonStrictClass = NonStrictClass()
 
   nonisolated static let ss: StrictStruct = StrictStruct()
-  // expected-warning@-1{{'nonisolated' can not be applied to variable with non-'Sendable' type 'StrictStruct'; this is an error in the Swift 6 language mode}}
-  // expected-warning@-2{{static property 'ss' is not concurrency-safe because non-'Sendable' type 'StrictStruct' may have shared mutable state; this is an error in the Swift 6 language mode}}
+  // expected-warning@-1{{'nonisolated' can not be applied to variable with non-'Sendable' type 'StrictStruct'}}
+  // expected-warning@-2{{static property 'ss' is not concurrency-safe because non-'Sendable' type 'StrictStruct' may have shared mutable state}}
   // expected-note@-3{{disable concurrency-safety checks if accesses are protected by an external synchronization mechanism}}
   // expected-note@-4{{add '@MainActor' to make static property 'ss' part of global actor 'MainActor'}}
 }

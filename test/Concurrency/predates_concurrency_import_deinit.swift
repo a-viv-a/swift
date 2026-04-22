@@ -17,6 +17,6 @@ actor ActorWithDeinit {
 
   deinit { // expected-note{{add 'isolated' to run isolated to 'ActorWithDeinit', which may be later than 'nonisolated deinit'}} {{3-3=isolated }}
     print(ns)
-    print(ss) // expected-warning{{cannot access property 'ss' with a non-Sendable type 'StrictStruct' from nonisolated deinit; this is an error in the Swift 6 language mode}}
+    print(ss) // expected-warning{{cannot access property 'ss' with a non-Sendable type 'StrictStruct' from nonisolated deinit}}
   }
 }

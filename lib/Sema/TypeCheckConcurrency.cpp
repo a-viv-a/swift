@@ -45,6 +45,7 @@
 #include "swift/AST/ProtocolConformance.h"
 #include "swift/AST/TypeCheckRequests.h"
 #include "swift/Basic/Assertions.h"
+#include "swift/Basic/LanguageMode.h"
 #include "swift/Sema/IDETypeChecking.h"
 #include "swift/Strings.h"
 #include "llvm/ADT/STLExtras.h"
@@ -891,22 +892,22 @@ DiagnosticBehavior SendableCheckContext::diagnosticBehavior(
   return defaultBehavior;
 }
 
-std::optional<DiagnosticBehavior>
+ConcurrencyDiagnosticBehavior
 SendableCheckContext::preconcurrencyBehavior(
     Decl *decl,
     bool ignoreExplicitConformance) const {
   if (!decl)
-    return std::nullopt;
+    return {};
 
   if (auto *nominal = dyn_cast<NominalTypeDecl>(decl)) {
     return getConcurrencyDiagnosticBehaviorLimit(nominal, fromDC,
                                                  ignoreExplicitConformance);
   }
 
-  return std::nullopt;
+  return {};
 }
 
-std::optional<DiagnosticBehavior>
+ConcurrencyDiagnosticBehavior
 SendableCheckContext::preconcurrencyBehavior(Type type) const {
   return type->getConcurrencyDiagnosticBehaviorLimit(
       const_cast<DeclContext *>(fromDC));
@@ -928,21 +929,22 @@ static bool shouldDiagnosePreconcurrencyImports(SourceFile &sf) {
 
 bool swift::diagnoseSendabilityErrorBasedOn(
     NominalTypeDecl *nominal, SendableCheckContext fromContext,
-    llvm::function_ref<bool(DiagnosticBehavior)> diagnose) {
-  auto behavior = DiagnosticBehavior::Unspecified;
+    llvm::function_ref<bool(ConcurrencyDiagnosticBehavior)> diagnose) {
+  auto limit = nominal ? fromContext.diagnosticBehavior(nominal)
+                       : fromContext.implicitSendableDiagnosticBehavior();
 
-  if (nominal) {
-    behavior = fromContext.diagnosticBehavior(nominal);
-  } else {
-    behavior = fromContext.implicitSendableDiagnosticBehavior();
-  }
+  auto concurrencyBehavior =
+      ConcurrencyDiagnosticBehavior::forLanguageStaging(
+          limit, LanguageMode::v6, fromContext.fromDC->getASTContext())
+          .merge(ConcurrencyDiagnosticBehavior::forPreconcurrencyIf(
+              fromContext.preconcurrencyContext, limit));
 
-  bool wasSuppressed = diagnose(behavior);
+  bool wasSuppressed = diagnose(concurrencyBehavior);
 
   SourceFile *sourceFile = fromContext.fromDC->getParentSourceFile();
   if (sourceFile && shouldDiagnosePreconcurrencyImports(*sourceFile)) {
     bool emittedDiagnostics =
-        behavior != DiagnosticBehavior::Ignore && !wasSuppressed;
+        !concurrencyBehavior.isIgnored() && !wasSuppressed;
 
     // When the type is explicitly Sendable *or* explicitly non-Sendable, we
     // assume it has been audited and `@preconcurrency` is not recommended even
@@ -979,7 +981,9 @@ bool swift::diagnoseSendabilityErrorBasedOn(
     }
   }
 
-  return behavior == DiagnosticBehavior::Unspecified && !wasSuppressed;
+  // TODO: this is not a literal translation. I *think* the old logic was always
+  // false because never Unspecified, but this can be true in some cases...
+  return concurrencyBehavior.isUnspecified() && !wasSuppressed;
 }
 
 void swift::diagnoseUnnecessaryPreconcurrencyImports(SourceFile &sf) {
@@ -1008,7 +1012,7 @@ void swift::diagnoseUnnecessaryPreconcurrencyImports(SourceFile &sf) {
 static bool diagnoseSingleNonSendableType(
     Type type, SendableCheckContext fromContext,
     Type inDerivedConformance, SourceLoc loc,
-    llvm::function_ref<bool(Type, DiagnosticBehavior)> diagnose) {
+    llvm::function_ref<bool(Type, ConcurrencyDiagnosticBehavior)> diagnose) {
   if (type->hasError())
     return false;
 
@@ -1017,12 +1021,12 @@ static bool diagnoseSingleNonSendableType(
   auto &ctx = module->getASTContext();
 
   return diagnoseSendabilityErrorBasedOn(nominal, fromContext,
-                                         [&](DiagnosticBehavior behavior) {
+                                         [&](ConcurrencyDiagnosticBehavior behavior) {
     bool wasSuppressed = diagnose(type, behavior);
 
     // Don't emit the following notes if we didn't have any diagnostics to
     // attach them to.
-    if (wasSuppressed || behavior == DiagnosticBehavior::Ignore)
+    if (wasSuppressed || behavior.isIgnored())
       return true;
 
     if (inDerivedConformance) {
@@ -1070,7 +1074,7 @@ static bool diagnoseSingleNonSendableType(
 bool swift::diagnoseNonSendableTypes(
     Type type, SendableCheckContext fromContext,
     Type inDerivedConformance, SourceLoc loc,
-    llvm::function_ref<bool(Type, DiagnosticBehavior)> diagnose) {
+    llvm::function_ref<bool(Type, ConcurrencyDiagnosticBehavior)> diagnose) {
   auto &ctx = type->getASTContext();
 
   // If the Sendable protocol is missing, do nothing.
@@ -2557,7 +2561,7 @@ namespace {
               diagnoseNonSendableTypes(
                   param.getPlainType(), context,
                   /*inDerivedConformance=*/Type(), funcConv->getLoc(),
-                  [&](Type type, DiagnosticBehavior behavior) {
+                  [&](Type type, auto) {
                     nonSendableTypes.insert(type);
                     return true;
                   });
@@ -2566,7 +2570,7 @@ namespace {
             diagnoseNonSendableTypes(
                 fnType->getResult(), context,
                 /*inDerivedConformance=*/Type(), funcConv->getLoc(),
-                [&](Type type, DiagnosticBehavior behavior) {
+                [&](Type type, auto) {
                   nonSendableTypes.insert(type);
                   return true;
                 });
@@ -4156,7 +4160,9 @@ namespace {
 
         ctx.Diags
             .diagnose(apply->getLoc(), diagnostic.getID(), diagnostic.getArgs())
-            .limitBehaviorIf(preconcurrency, DiagnosticBehavior::Warning);
+            .limitBehaviorForConcurrency(
+                ConcurrencyDiagnosticBehavior::forPreconcurrencyIf(
+                    preconcurrency));
 
         if (calleeDecl) {
           auto calleeIsolation = getInferredActorIsolation(calleeDecl);
@@ -7302,8 +7308,9 @@ static bool checkSendableInstanceStorage(
       diagnoseNonSendableTypes(
           memberType, context,
           /*inDerivedConformance*/ Type(), member->getLoc(),
-          [&](Type type, DiagnosticBehavior behavior) {
-            auto preconcurrencyBehavior = context.preconcurrencyBehavior(type);
+          [&](Type type, ConcurrencyDiagnosticBehavior behavior) {
+            auto concurrencyBehavior =
+                context.preconcurrencyBehavior(type).merge(behavior);
             if (isImplicitSendableCheck(check)) {
               // If this is for an externally-visible conformance, fail.
               if (check == SendableCheck::ImplicitForExternallyVisible) {
@@ -7312,8 +7319,7 @@ static bool checkSendableInstanceStorage(
               }
 
               // If we are to ignore this diagnostic, just continue.
-              if (behavior == DiagnosticBehavior::Ignore ||
-                  preconcurrencyBehavior == DiagnosticBehavior::Ignore)
+              if (concurrencyBehavior.isIgnored())
                 return true;
 
               invalid = true;
@@ -7323,19 +7329,15 @@ static bool checkSendableInstanceStorage(
             // If Sendable came from a `@preconcurrency` protocol the error
             // should be downgraded even with strict concurrency checking to
             // allow clients time to address the new requirement.
-            bool fromPreconcurrencyConformance =
-                check == SendableCheck::ImpliedByPreconcurrencyProtocol;
-
-            if (preconcurrencyBehavior)
-              behavior = preconcurrencyBehavior.value();
+            concurrencyBehavior = concurrencyBehavior.merge(
+                ConcurrencyDiagnosticBehavior::forPreconcurrencyIf(
+                    check == SendableCheck::ImpliedByPreconcurrencyProtocol));
 
             member
                 ->diagnose(diag::non_concurrent_type_member, type,
                            isa<EnumElementDecl>(member), member->getName(),
                            nominal, type->isEqual(memberType))
-                .limitBehaviorWithPreconcurrency(
-                    behavior, fromPreconcurrencyConformance ||
-                                  preconcurrencyBehavior.has_value());
+                .limitBehaviorForConcurrency(concurrencyBehavior);
             return false;
           });
 
@@ -7479,11 +7481,12 @@ bool swift::checkSendableConformance(
   // Sendable can only be used in the same source file.
   auto conformanceDecl = conformanceDC->getAsDecl();
   SendableCheckContext checkContext(conformanceDC, check);
-  DiagnosticBehavior behavior = checkContext.defaultDiagnosticBehavior();
+  auto behavior = ConcurrencyDiagnosticBehavior::forLanguageStaging(
+      checkContext.defaultDiagnosticBehavior(), LanguageMode::v6,
+      conformanceDC->getASTContext());
   if (wasImplied) {
-    if (auto optBehavior = checkContext.preconcurrencyBehavior(
-            nominal, /*ignoreExplicitConformance=*/true))
-      behavior = *optBehavior;
+    behavior = behavior.merge(checkContext.preconcurrencyBehavior(
+        nominal, /*ignoreExplicitConformance=*/true));
   }
 
   if (conformanceDC->getOutermostParentSourceFile() &&
@@ -7492,9 +7495,9 @@ bool swift::checkSendableConformance(
     if (!(nominal->hasClangNode() && wasImplied)) {
       conformanceDecl
           ->diagnose(diag::concurrent_value_outside_source_file, nominal)
-          .limitBehaviorUntilLanguageMode(behavior, LanguageMode::v6);
+          .limitBehaviorForConcurrency(behavior);
 
-      if (behavior == DiagnosticBehavior::Unspecified)
+      if (behavior.isUnspecified())
         return true;
     }
   }
@@ -7506,9 +7509,9 @@ bool swift::checkSendableConformance(
     if (!classDecl->isSemanticallyFinal()) {
       classDecl->diagnose(diag::concurrent_value_nonfinal_class,classDecl->getName())
           .fixItInsert(classDecl->getStartLoc(), "final ")
-          .limitBehaviorUntilLanguageMode(behavior, LanguageMode::v6);
+          .limitBehaviorForConcurrency(behavior);
 
-      if (behavior == DiagnosticBehavior::Unspecified)
+      if (behavior.isUnspecified())
         return true;
     }
 
@@ -7521,9 +7524,9 @@ bool swift::checkSendableConformance(
               ->diagnose(diag::concurrent_value_inherit,
                          nominal->getASTContext().LangOpts.EnableObjCInterop,
                          classDecl->getName())
-              .limitBehaviorUntilLanguageMode(behavior, LanguageMode::v6);
+              .limitBehaviorForConcurrency(behavior);
 
-          if (behavior == DiagnosticBehavior::Unspecified)
+          if (behavior.isUnspecified())
             return true;
         }
       }

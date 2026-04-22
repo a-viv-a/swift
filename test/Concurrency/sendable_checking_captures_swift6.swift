@@ -46,7 +46,9 @@ do {
     sendable_preconcurrency {
       test.update()
       // expected-warning@-1 {{capture of 'test' with non-Sendable type 'Test' in a '@Sendable' closure}}
-      // expected-warning@-2 {{mutable capture of 'inout' parameter 'test' is not allowed in concurrently-executing code}}
+      // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+      // expected-warning@-3 {{mutable capture of 'inout' parameter 'test' is not allowed in concurrently-executing code}}
+      // expected-note@-4 {{downgraded to a warning by '@preconcurrency'}}
     }
   }
 }
@@ -64,7 +66,9 @@ do {
       C.f {
         use(self)
         // expected-warning@-1 {{capture of 'self' with non-Sendable type 'SelfCapture' in a '@Sendable' closure}}
-        // expected-warning@-2 {{implicit capture of 'self' requires that 'SelfCapture' conforms to 'Sendable'}}
+        // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+        // expected-warning@-3 {{implicit capture of 'self' requires that 'SelfCapture' conforms to 'Sendable'}}
+        // expected-note@-4 {{downgraded to a warning by '@preconcurrency'}}
       }
     }
 
@@ -72,8 +76,11 @@ do {
       C.f {
         { use(self) }()
         // expected-warning@-1 {{capture of 'self' with non-Sendable type 'SelfCapture' in a '@Sendable' closure}}
-        // expected-warning@-2 {{capture of 'self' with non-Sendable type 'SelfCapture' in an isolated closure}}
-        // expected-warning@-3 {{implicit capture of 'self' requires that 'SelfCapture' conforms to 'Sendable'}}
+        // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+        // expected-warning@-3 {{capture of 'self' with non-Sendable type 'SelfCapture' in an isolated closure}}
+        // expected-note@-4 {{downgraded to a warning by '@preconcurrency'}}
+        // expected-warning@-5 {{implicit capture of 'self' requires that 'SelfCapture' conforms to 'Sendable'}}
+        // expected-note@-6 {{downgraded to a warning by '@preconcurrency'}}
       }
     }
   }

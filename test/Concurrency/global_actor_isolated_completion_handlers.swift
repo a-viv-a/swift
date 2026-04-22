@@ -73,30 +73,40 @@ nonisolated func testUse(v1: TestFromProtocol, v2: TestFromType, v3: TestSubclas
   await v1.compute { val += 1 } // No execution warning because parameter type isn't Sendable
   // expected-warning@-1 {{consider using asynchronous alternative function}}
 
-  await v1.compute { @Sendable in val += 1 } // expected-warning {{mutation of captured var 'val' in concurrently-executing code}}
-  // expected-warning@-1 {{consider using asynchronous alternative function}}
+  await v1.compute { @Sendable in val += 1 }
+  // expected-warning@-1 {{mutation of captured var 'val' in concurrently-executing code}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-warning@-3 {{consider using asynchronous alternative function}}
 
   await v2.compute { val += 1 } // No execution warning because parameter type isn't Sendable
   // expected-warning@-1 {{consider using asynchronous alternative function}}
 
-  await v2.compute { @Sendable in val += 1 } // expected-warning {{mutation of captured var 'val' in concurrently-executing code}}
-  // expected-warning@-1 {{consider using asynchronous alternative function}}
+  await v2.compute { @Sendable in val += 1 }
+  // expected-warning@-1 {{mutation of captured var 'val' in concurrently-executing code}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-warning@-3 {{consider using asynchronous alternative function}}
 
   await v3.subCompute { val += 1 } // No execution warning because parameter type isn't Sendable
   // expected-warning@-1 {{consider using asynchronous alternative function}}
 
-  await v3.subCompute { @Sendable in val += 1 } // expected-warning {{mutation of captured var 'val' in concurrently-executing code}}
-  // expected-warning@-1 {{consider using asynchronous alternative function}}
+  await v3.subCompute { @Sendable in val += 1 }
+  // expected-warning@-1 {{mutation of captured var 'val' in concurrently-executing code}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-warning@-3 {{consider using asynchronous alternative function}}
 
   await v4.compute { val += 1 } // No execution warning because parameter type isn't Sendable
   // expected-warning@-1 {{consider using asynchronous alternative function}}
 
-  await v4.compute { @Sendable in val += 1 } // expected-warning {{mutation of captured var 'val' in concurrently-executing code}}
-  // expected-warning@-1 {{consider using asynchronous alternative function}}
+  await v4.compute { @Sendable in val += 1 }
+  // expected-warning@-1 {{mutation of captured var 'val' in concurrently-executing code}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-warning@-3 {{consider using asynchronous alternative function}}
 
   await v5.computeStatic { val += 1 } // No execution warning because parameter type isn't Sendable
   // expected-warning@-1 {{consider using asynchronous alternative function}}
 
-  await v5.computeStatic { @Sendable in val += 1 } // expected-warning {{mutation of captured var 'val' in concurrently-executing code}}
-  // expected-warning@-1 {{consider using asynchronous alternative function}}
+  await v5.computeStatic { @Sendable in val += 1 }
+  // expected-warning@-1 {{mutation of captured var 'val' in concurrently-executing code}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-warning@-3 {{consider using asynchronous alternative function}}
 }

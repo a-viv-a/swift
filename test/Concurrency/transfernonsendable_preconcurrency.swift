@@ -64,7 +64,8 @@ func testPreconcurrencyExplicitlyNonSendable() async {
   // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-2 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
   // expected-swift-6-warning @-3 {{sending 'x' risks causing data races}}
-  // expected-swift-6-note @-4 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
+  // expected-swift-6-note @-4 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-swift-6-note @-5 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
   useValue(x)
   // expected-swift-5-note @-1 {{access can happen concurrently}}
   // expected-swift-6-note @-2 {{access can happen concurrently}}
@@ -111,7 +112,8 @@ func testNeverTransferExplicit(_ x: PreCUncheckedExplicitlyNonSendableKlass) asy
   // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-2 {{sending task-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and task-isolated uses}}
   // expected-swift-6-warning @-3 {{sending 'x' risks causing data races}}
-  // expected-swift-6-note @-4 {{sending task-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and task-isolated uses}}
+  // expected-swift-6-note @-4 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-swift-6-note @-5 {{sending task-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and task-isolated uses}}
 }
 
 func testNeverTransferNormal(_ x: PostCUncheckedNonSendableKlass) async {
@@ -131,7 +133,8 @@ func testNeverTransferInexactMatchExplicit(_ x: (PreCUncheckedExplicitlyNonSenda
   // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-2 {{sending task-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and task-isolated uses}}
   // expected-swift-6-warning @-3 {{sending 'x' risks causing data races}}
-  // expected-swift-6-note @-4 {{sending task-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and task-isolated uses}}
+  // expected-swift-6-note @-4 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-swift-6-note @-5 {{sending task-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and task-isolated uses}}
 }
 
 

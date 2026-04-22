@@ -579,13 +579,12 @@ static void diagnoseGeneralOverrideFailure(ValueDecl *decl,
       auto baseDeclClass = match.Decl->getDeclContext()->getSelfClassDecl();
 
       diagnoseSendabilityErrorBasedOn(
-          baseDeclClass, fromContext, [&](DiagnosticBehavior limit) {
+          baseDeclClass, fromContext, [&](ConcurrencyDiagnosticBehavior limit) {
             diags
                 .diagnose(decl, diag::override_sendability_mismatch,
                           decl->getName())
-                .limitBehaviorUntilLanguageMode(limit, LanguageMode::v6)
-                .limitBehaviorIf(
-                    fromContext.preconcurrencyBehavior(baseDeclClass));
+                .limitBehaviorForConcurrency(limit.merge(
+                    fromContext.preconcurrencyBehavior(baseDeclClass)));
             return false;
           });
     }
@@ -598,11 +597,16 @@ static void diagnoseGeneralOverrideFailure(ValueDecl *decl,
     for (const auto &match : matches) {
       auto baseDeclClass = match.Decl->getDeclContext()->getSelfClassDecl();
 
+      auto behavior =
+          ConcurrencyDiagnosticBehavior::forLanguageStaging(
+              DiagnosticBehavior::Warning, LanguageMode::v6,
+              decl->getASTContext())
+              .merge(fromContext.preconcurrencyBehavior(baseDeclClass));
+
       diags
           .diagnose(decl, diag::override_global_actor_isolation_mismatch,
                     decl->getName())
-          .warnUntilLanguageMode(LanguageMode::v6)
-          .limitBehaviorIf(fromContext.preconcurrencyBehavior(baseDeclClass));
+          .limitBehaviorForConcurrency(behavior);
     }
     break;
   }

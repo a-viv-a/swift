@@ -23,7 +23,7 @@ nonisolated func acceptMeta<T>(_: T.Type) { }
 nonisolated func staticCallThroughMetaVal<T: Q>(_: T.Type) {
   let x = T.self
   Task.detached {
-    x.g() // expected-warning{{capture of non-Sendable type 'T.Type' in an isolated closure}}
+    x.g() // expected-warning{{capture of non-Sendable type 'T.Type' in an isolated closure; this will be an error in a future Swift language mode}}
   }
 }
 
@@ -37,19 +37,19 @@ nonisolated func captureThroughMetaValMoReqs<T>(_: T.Type) {
 nonisolated func passMetaVal<T: Q>(_: T.Type) {
   let x = T.self
   Task.detached {
-    acceptMeta(x) // expected-warning{{capture of non-Sendable type}}
+    acceptMeta(x) // expected-warning{{capture of non-Sendable type 'T.Type' in an isolated closure; this will be an error in a future Swift language mode}}
   }
 }
 
 nonisolated func staticCallThroughMeta<T: Q>(_: T.Type) {
   Task.detached {
-    T.g() // expected-warning{{capture of non-Sendable type}}
+    T.g() // expected-warning{{capture of non-Sendable type 'T.Type' in an isolated closure; this will be an error in a future Swift language mode}}
   }
 }
 
 nonisolated func passMeta<T: Q>(_: T.Type) {
   Task.detached {
-    acceptMeta(T.self) // expected-warning{{capture of non-Sendable type 'T.Type' in an isolated closure}}
+    acceptMeta(T.self) // expected-warning{{capture of non-Sendable type 'T.Type' in an isolated closure; this will be an error in a future Swift language mode}}
   }
 }
 
@@ -111,7 +111,7 @@ extension String: Q {
 class Holder: @unchecked Sendable {
   // expected-note@+3{{disable concurrency-safety checks if accesses are protected by an external synchronization mechanism}}
   // expected-note@+2{{add '@MainActor' to make static property 'globalExistentialThing' part of global actor 'MainActor'}}
-  // expected-warning@+1{{static property 'globalExistentialThing' is not concurrency-safe because non-'Sendable' type 'Dictionary<Int, any Q.Type>' may have shared mutable state}}
+  // expected-warning@+1{{static property 'globalExistentialThing' is not concurrency-safe because non-'Sendable' type 'Dictionary<Int, any Q.Type>' may have shared mutable state; this will be an error in a future Swift language mode}}
   static let globalExistentialThing: Dictionary<Int, Q.Type> = [
     1: Int.self,
     2: String.self,
@@ -119,11 +119,11 @@ class Holder: @unchecked Sendable {
 }
 
 enum E: Sendable {
-case q(Q.Type, Int) // expected-warning{{associated value 'q' of 'Sendable'-conforming enum 'E' contains non-Sendable type 'any Q.Type'}}
+case q(Q.Type, Int) // expected-warning{{associated value 'q' of 'Sendable'-conforming enum 'E' contains non-Sendable type 'any Q.Type'; this will be an error in a future Swift language mode}}
 }
 
 struct S: Sendable {
-  var tuple: ([Q.Type], Int) // expected-warning{{stored property 'tuple' of 'Sendable'-conforming struct 'S' contains non-Sendable type 'any Q.Type'}}
+  var tuple: ([Q.Type], Int) // expected-warning{{stored property 'tuple' of 'Sendable'-conforming struct 'S' contains non-Sendable type 'any Q.Type'; this will be an error in a future Swift language mode}}
 }
 
 extension Q {
@@ -199,8 +199,8 @@ func sendableSequence<S: AsyncSequence & Sendable>(_ s: S) throws {
 
 func nonSendableSequence<S: AsyncSequence>(_ s: S) throws {
   _ = Task.detached {
-    for try await i in s { // expected-warning{{capture of non-Sendable type 'S.AsyncIterator.Type' in an isolated closure}}
-      // expected-warning@-1{{capture of non-Sendable type 'S.Type' in an isolated closure}}
+    for try await i in s { // expected-warning{{capture of non-Sendable type 'S.AsyncIterator.Type' in an isolated closure; this will be an error in a future Swift language mode}}
+      // expected-warning@-1{{capture of non-Sendable type 'S.Type' in an isolated closure; this will be an error in a future Swift language mode}}
       print(i)
     }
   }

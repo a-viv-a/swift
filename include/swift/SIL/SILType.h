@@ -18,6 +18,8 @@
 #ifndef SWIFT_SIL_SILTYPE_H
 #define SWIFT_SIL_SILTYPE_H
 
+#include "swift/AST/Concurrency.h"
+#include "swift/AST/DiagnosticEngine.h"
 #include "swift/AST/SILLayout.h"
 #include "swift/AST/Types.h"
 #include "swift/Basic/Assertions.h"
@@ -1017,8 +1019,9 @@ public:
   /// should have diagnostics ignored or converted to warnings instead of
   /// errors.
   ///
-  /// \returns nil if we were unable to find such information for this type.
-  std::optional<DiagnosticBehavior>
+  /// \returns the default (all reasons empty) if we were unable to find such
+  /// information for this type.
+  ConcurrencyDiagnosticBehavior
   getConcurrencyDiagnosticBehavior(SILFunction *fn) const;
 
   //

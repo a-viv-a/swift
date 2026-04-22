@@ -14,10 +14,50 @@
 #include "swift/AST/ASTContext.h"
 #include "swift/AST/ConformanceLookup.h"
 #include "swift/AST/Decl.h"
+#include "swift/AST/DiagnosticEngine.h"
 #include "swift/AST/ProtocolConformance.h"
 #include "swift/AST/SourceFile.h"
 
 using namespace swift;
+
+template <typename T, typename Join>
+static std::optional<T>
+mergeOpt(std::optional<T> a, std::optional<T> b, Join join) {
+  if (a && b)
+    return join(*a, *b);
+  return a ? a : b;
+}
+
+ConcurrencyDiagnosticBehavior ConcurrencyDiagnosticBehavior::merge(
+    ConcurrencyDiagnosticBehavior other) const {
+  ConcurrencyDiagnosticBehavior result;
+  result.preconcurrency =
+      mergeOpt(preconcurrency, other.preconcurrency,
+               [](auto left, auto right) { return left.merge(right); });
+  result.languageStaging = mergeOpt(
+      languageStaging, other.languageStaging, [](auto left, auto right) {
+        auto until = left.until.version() > right.until.version()
+                         ? left.until
+                         : right.until;
+        return LanguageStaging{left.behavior.merge(right.behavior), until};
+      });
+  return result;
+}
+
+ConcurrencyDiagnosticBehavior
+ConcurrencyDiagnosticBehavior::forLanguageStaging(
+    DiagnosticBehavior behavior, LanguageMode until, const ASTContext &ctx) {
+  return forLanguageStaging(behavior, until,
+                            ctx.LangOpts.EffectiveLanguageVersion);
+}
+
+ConcurrencyDiagnosticBehavior
+ConcurrencyDiagnosticBehavior::forLanguageStagingIf(
+    bool condition, DiagnosticBehavior behavior, LanguageMode until,
+    const ASTContext &ctx) {
+  return forLanguageStagingIf(condition, behavior, until,
+                              ctx.LangOpts.EffectiveLanguageVersion);
+}
 
 ModuleDecl *swift::moduleImportForPreconcurrency(
     NominalTypeDecl *nominal, const DeclContext *fromDC) {
@@ -41,23 +81,24 @@ ModuleDecl *swift::moduleImportForPreconcurrency(
   return import->module.importedModule;
 }
 
-std::optional<DiagnosticBehavior>
+ConcurrencyDiagnosticBehavior
 swift::getConcurrencyDiagnosticBehaviorLimit(NominalTypeDecl *nominal,
                                              const DeclContext *fromDC,
                                              bool ignoreExplicitConformance) {
   ModuleDecl *importedModule = moduleImportForPreconcurrency(nominal, fromDC);
   if (!importedModule)
-    return std::nullopt;
+    return ConcurrencyDiagnosticBehavior();
 
   // When the type is explicitly non-Sendable, @preconcurrency imports
   // downgrade the diagnostic to a warning in Swift 6.
   if (!ignoreExplicitConformance && hasExplicitSendableConformance(nominal))
-    return DiagnosticBehavior::Warning;
+    return ConcurrencyDiagnosticBehavior::forPreconcurrency();
 
   // When the type is implicitly non-Sendable, `@preconcurrency` suppresses
   // diagnostics until the imported module enables Swift 6.
-  return importedModule->isConcurrencyChecked() ? DiagnosticBehavior::Warning
-                                                : DiagnosticBehavior::Ignore;
+  return ConcurrencyDiagnosticBehavior::forPreconcurrency(
+      importedModule->isConcurrencyChecked() ? DiagnosticBehavior::Warning
+                                             : DiagnosticBehavior::Ignore);
 }
 
 /// Determine whether the given nominal type has an explicit Sendable

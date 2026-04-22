@@ -37,6 +37,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include <optional>
 
 namespace clang {
 class NamedDecl;
@@ -44,6 +45,7 @@ class Type;
 }
 
 namespace swift {
+  class ASTContext;
   class ClosureExpr;
   class Decl;
   class DeclAttribute;
@@ -120,6 +122,8 @@ namespace swift {
       return Kind(value);
     }
   };
+
+  struct ConcurrencyDiagnosticBehavior;
 
   struct DiagnosticFormatOptions {
     const std::string OpeningQuotationMark;
@@ -404,8 +408,8 @@ namespace swift {
     InFlightDiagnostic &limitBehaviorUntilLanguageMode(DiagnosticBehavior limit,
                                                        LanguageMode mode);
 
-    /// Limits the diagnostic behavior to \c limit accordingly if
-    /// preconcurrency applies. Otherwise, the behavior limit only applies
+    /// Limits the diagnostic behavior to \c limit accordingly and emits a note
+    /// if preconcurrency applies. Otherwise, the behavior limit only applies
     /// prior to the given language mode.
     ///
     /// `@preconcurrency` applied to a nominal declaration or an import
@@ -420,13 +424,21 @@ namespace swift {
     InFlightDiagnostic &
     limitBehaviorWithPreconcurrency(DiagnosticBehavior limit,
                                     bool preconcurrency,
-                                    LanguageMode mode = LanguageMode::v6) {
-      if (preconcurrency) {
-        return limitBehavior(limit);
-      }
+                                    LanguageMode mode = LanguageMode::v6);
 
-      return limitBehaviorUntilLanguageMode(limit, mode);
-    }
+    /// Apply a `ConcurrencyDiagnosticBehavior` to this diagnostic.
+    ///
+    /// Limits the diagnostic to the merged behavior in `concurrencyBehavior`.
+    /// If this is empty or unspecified, no limit is applied. If the downgrade
+    /// comes purely from language staging, the diagnostic is wrapped with `";
+    /// this will be an error in Swift N"`. For Swift 5, if
+    /// `@preconcurrency` is also involved the wrap is skipped.
+    ///
+    /// In Swift 6 and later, a note attributes any `@preconcurrency`
+    /// downgrade. When staging and `@preconcurrency` both apply, the
+    /// note says so.
+    InFlightDiagnostic &limitBehaviorForConcurrency(
+        const ConcurrencyDiagnosticBehavior &concurrencyBehavior);
 
     /// Limit the diagnostic behavior to warning until the specified language
     /// mode.

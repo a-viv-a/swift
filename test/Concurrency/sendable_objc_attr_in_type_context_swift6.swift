@@ -143,12 +143,14 @@ func test_sendable_attr_in_type_context(test: Test) {
   // TODO(diagnostics): Duplicate diagnostics
   TestWithSendableID().add(MyValue())
   // expected-warning@-1 3 {{type 'MyValue' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 3 {{downgraded to a warning by '@preconcurrency'}}
 
   TestWithSendableSuperclass().add(SendableMyValue()) // Ok
 
   // TODO(diagnostics): Duplicate diagnostics
   TestWithSendableSuperclass().add(MyValue())
   // expected-warning@-1 3 {{type 'MyValue' does not conform to the 'Sendable' protocol}}
+  // expected-note@-2 3 {{downgraded to a warning by '@preconcurrency'}}
 }
 
 class TestConformanceWithStripping : InnerSendableTypes {
@@ -185,6 +187,7 @@ class TestConformanceWithoutStripping : InnerSendableTypes {
 
   @objc func compute(completionHandler: @escaping () -> Void) {}
   // expected-warning@-1 {{sendability of function types in instance method 'compute(completionHandler:)' of type '(@escaping () -> Void) -> ()' does not match type '(@escaping @Sendable () -> Void) -> Void' declared by the header}}
+  // expected-note@-2 {{downgraded to a warning by '@preconcurrency'}}
 }
 
 // Methods deliberately has no `@Sendable` to make sure that
@@ -233,6 +236,7 @@ class SelfCapture { // expected-note 5 {{class 'SelfCapture' does not conform to
       Self.use(self)
       // expected-warning@-1 {{capture of 'self' with non-Sendable type 'SelfCapture' in a '@Sendable' closure}}
       // expected-warning@-2 {{implicit capture of 'self' requires that 'SelfCapture' conforms to 'Sendable'}}
+      // expected-note@-3 2 {{downgraded to a warning by '@preconcurrency'}}
     }
   }
 
@@ -242,6 +246,7 @@ class SelfCapture { // expected-note 5 {{class 'SelfCapture' does not conform to
       // expected-warning@-1 {{capture of 'self' with non-Sendable type 'SelfCapture' in a '@Sendable' closure}}
       // expected-warning@-2 {{capture of 'self' with non-Sendable type 'SelfCapture' in an isolated closure}}
       // expected-warning@-3 {{implicit capture of 'self' requires that 'SelfCapture' conforms to 'Sendable'}}
+      // expected-note@-4 3 {{downgraded to a warning by '@preconcurrency'}}
     }
   }
 }

@@ -19,6 +19,7 @@
 
 #include "swift/AST/ASTContext.h"
 #include "swift/AST/ConcreteDeclRef.h"
+#include "swift/AST/Concurrency.h"
 #include "swift/AST/DiagnosticEngine.h"
 #include "swift/AST/Expr.h"
 #include "swift/AST/Module.h"
@@ -426,14 +427,14 @@ struct SendableCheckContext {
   /// Determine the preconcurrency behavior when referencing the given
   /// declaration from a type. This only has an effect when the declaration
   /// is a nominal type.
-  std::optional<DiagnosticBehavior> preconcurrencyBehavior(
+  ConcurrencyDiagnosticBehavior preconcurrencyBehavior(
       Decl *decl,
       bool ignoreExplicitConformance = false) const;
 
   /// Determine the preconcurrency behavior when referencing the given
   /// non-Sendable type. This only has an effect when the declaration
   /// is a nominal or metatype type.
-  std::optional<DiagnosticBehavior> preconcurrencyBehavior(Type type) const;
+  ConcurrencyDiagnosticBehavior preconcurrencyBehavior(Type type) const;
 
   /// Whether to warn about a Sendable violation even in minimal checking.
   bool warnInMinimalChecking() const;
@@ -451,7 +452,7 @@ struct SendableCheckContext {
 bool diagnoseNonSendableTypes(
     Type type, SendableCheckContext fromContext,
     Type inDerivedConformance, SourceLoc loc,
-    llvm::function_ref<bool(Type, DiagnosticBehavior)> diagnose);
+    llvm::function_ref<bool(Type, ConcurrencyDiagnosticBehavior)> diagnose);
 
 namespace detail {
   template<typename T>
@@ -512,18 +513,18 @@ bool diagnoseNonSendableTypes(
   ASTContext &ctx = fromContext.fromDC->getASTContext();
   return diagnoseNonSendableTypes(
       type, fromContext, derivedConformance, typeLoc,
-      [&](Type specificType, DiagnosticBehavior behavior) {
+      [&](Type specificType, ConcurrencyDiagnosticBehavior behavior) {
         // FIXME: Reconcile preconcurrency declaration vs preconcurrency
         // import behavior.
-        auto preconcurrency = fromContext.preconcurrencyBehavior(specificType);
+        auto concurrencyBehavior =
+            behavior.merge(fromContext.preconcurrencyBehavior(specificType));
 
-        ctx.Diags.diagnose(diagnoseLoc, diag, type, diagArgs...)
-            .limitBehaviorWithPreconcurrency(behavior,
-                                             fromContext.preconcurrencyContext)
-            .limitBehaviorIf(preconcurrency);
+        ctx.Diags
+            .diagnose(diagnoseLoc, diag, type, diagArgs...)
+            // TODO: I'm suspicious we changed the logic here...
+            .limitBehaviorForConcurrency(concurrencyBehavior);
 
-        return (behavior == DiagnosticBehavior::Ignore ||
-                preconcurrency == DiagnosticBehavior::Ignore);
+        return concurrencyBehavior.isIgnored();
       });
 }
 
@@ -550,17 +551,16 @@ bool diagnoseIfAnyNonSendableTypes(
   bool diagnosed = false;
   diagnoseNonSendableTypes(
       type, fromContext, derivedConformance, typeLoc,
-      [&](Type specificType, DiagnosticBehavior behavior) {
-        auto preconcurrency = fromContext.preconcurrencyBehavior(specificType);
+      [&](Type specificType, ConcurrencyDiagnosticBehavior behavior) {
+        auto concurrencyBehavior =
+            fromContext.preconcurrencyBehavior(specificType).merge(behavior);
 
-        if (behavior == DiagnosticBehavior::Ignore ||
-            preconcurrency == DiagnosticBehavior::Ignore)
+        if (concurrencyBehavior.isIgnored())
           return true;
 
         if (!diagnosed) {
           ctx.Diags.diagnose(diagnoseLoc, diag, type, diagArgs...)
-              .limitBehaviorUntilLanguageMode(behavior, LanguageMode::v6)
-              .limitBehaviorIf(preconcurrency);
+              .limitBehaviorForConcurrency(concurrencyBehavior);
           diagnosed = true;
         }
 
@@ -605,7 +605,7 @@ bool diagnoseNonSendableTypes(
 /// only warnings and notes were produced.
 bool diagnoseSendabilityErrorBasedOn(
     NominalTypeDecl *nominal, SendableCheckContext fromContext,
-    llvm::function_ref<bool(DiagnosticBehavior)> diagnose);
+    llvm::function_ref<bool(ConcurrencyDiagnosticBehavior)> diagnose);
 
 /// Given a set of custom attributes, pick out the global actor attributes
 /// and perform any necessary resolution and diagnostics, returning the

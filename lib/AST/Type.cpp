@@ -23,6 +23,7 @@
 #include "swift/AST/Concurrency.h"
 #include "swift/AST/ConformanceLookup.h"
 #include "swift/AST/Decl.h"
+#include "swift/AST/DiagnosticEngine.h"
 #include "swift/AST/ExistentialLayout.h"
 #include "swift/AST/GenericEnvironment.h"
 #include "swift/AST/LazyResolver.h"
@@ -5326,14 +5327,14 @@ StringRef swift::getNameForParamSpecifier(ParamSpecifier specifier) {
   llvm_unreachable("bad ParamSpecifier");
 }
 
-static std::optional<DiagnosticBehavior>
+static ConcurrencyDiagnosticBehavior
 getConcurrencyDiagnosticBehaviorLimitRec(
     Type type, DeclContext *declCtx,
     llvm::SmallPtrSetImpl<NominalTypeDecl *> &visited) {
   if (auto *nomDecl = type->getNominalOrBoundGenericNominal()) {
     // If we have already seen this type, treat it as having no limit.
     if (!visited.insert(nomDecl).second)
-      return std::nullopt;
+      return ConcurrencyDiagnosticBehavior();
 
     // First try to just grab the exact concurrency diagnostic behavior.
     if (auto result =
@@ -5344,19 +5345,16 @@ getConcurrencyDiagnosticBehaviorLimitRec(
     // But if we get nothing, see if we can come up with diagnostic behavior by
     // merging our fields if we have a struct.
     if (auto *structDecl = dyn_cast<StructDecl>(nomDecl)) {
-      std::optional<DiagnosticBehavior> diagnosticBehavior;
+      ConcurrencyDiagnosticBehavior diagnosticBehavior;
 
       if (!nomDecl->isResilient(declCtx->getParentModule(),
                           ResilienceExpansion::Maximal)) {
         auto substMap = type->getContextSubstitutionMap();
         for (auto storedProperty : structDecl->getStoredProperties()) {
-          auto lhs = diagnosticBehavior.value_or(DiagnosticBehavior::Unspecified);
           auto astType = storedProperty->getInterfaceType().subst(substMap);
-          auto rhs = getConcurrencyDiagnosticBehaviorLimitRec(astType, declCtx,
-                                                              visited);
-          auto result = lhs.merge(rhs.value_or(DiagnosticBehavior::Unspecified));
-          if (result != DiagnosticBehavior::Unspecified)
-            diagnosticBehavior = result;
+          diagnosticBehavior =
+              diagnosticBehavior.merge(getConcurrencyDiagnosticBehaviorLimitRec(
+                  astType, declCtx, visited));
         }
         return diagnosticBehavior;
       }
@@ -5366,16 +5364,12 @@ getConcurrencyDiagnosticBehaviorLimitRec(
   // When attempting to determine the diagnostic behavior limit of a tuple, just
   // merge for each of the elements.
   if (auto *tupleType = type->getAs<TupleType>()) {
-    std::optional<DiagnosticBehavior> diagnosticBehavior;
+    ConcurrencyDiagnosticBehavior diagnosticBehavior;
     for (auto tupleType : tupleType->getElements()) {
-      auto lhs = diagnosticBehavior.value_or(DiagnosticBehavior::Unspecified);
 
       auto type = tupleType.getType()->getCanonicalType();
-      auto rhs = getConcurrencyDiagnosticBehaviorLimitRec(type, declCtx,
-                                                          visited);
-      auto result = lhs.merge(rhs.value_or(DiagnosticBehavior::Unspecified));
-      if (result != DiagnosticBehavior::Unspecified)
-        diagnosticBehavior = result;
+      diagnosticBehavior = diagnosticBehavior.merge(
+          getConcurrencyDiagnosticBehaviorLimitRec(type, declCtx, visited));
     }
     return diagnosticBehavior;
   }
@@ -5383,14 +5377,15 @@ getConcurrencyDiagnosticBehaviorLimitRec(
   // Metatypes that aren't Sendable were introduced in Swift 6.2, so downgrade
   // them to warnings prior to Swift 7.
   if (type->is<AnyMetatypeType>()) {
-    if (!declCtx->getASTContext().isLanguageModeAtLeast(LanguageMode::future))
-      return DiagnosticBehavior::Warning;
+    return ConcurrencyDiagnosticBehavior::forLanguageStaging(
+        DiagnosticBehavior::Warning, LanguageMode::future,
+        declCtx->getASTContext());
   }
 
-  return std::nullopt;
+  return ConcurrencyDiagnosticBehavior();
 }
 
-std::optional<DiagnosticBehavior>
+ConcurrencyDiagnosticBehavior
 TypeBase::getConcurrencyDiagnosticBehaviorLimit(DeclContext *declCtx) const {
   auto *self = const_cast<TypeBase *>(this);
   llvm::SmallPtrSet<NominalTypeDecl *, 16> visited;

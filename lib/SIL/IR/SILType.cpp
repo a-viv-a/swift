@@ -1397,7 +1397,7 @@ Type SILType::getRawLayoutSubstitutedCountType() const {
   return countType.subst(subs);
 }
 
-std::optional<DiagnosticBehavior>
+ConcurrencyDiagnosticBehavior
 SILType::getConcurrencyDiagnosticBehavior(SILFunction *fn) const {
   auto declRef = fn->getDeclRef();
   if (!declRef)

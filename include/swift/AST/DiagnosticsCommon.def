@@ -66,6 +66,12 @@ WARNING(error_in_a_future_swift_lang_mode,none,
         "%0; this will be an error in a future Swift language mode",
         (DiagnosticInfo *))
 
+GROUPED_NOTE(note_preconcurrency_downgrade,PreconcurrencyDowngrade,none,
+             "downgraded to %select{%error|a fatal error|an error|a warning|"
+             "a remark|%error|%error}0 by '@preconcurrency'"
+             "%select{| and language version}1",
+             (unsigned, bool))
+
 // Generic disambiguation
 NOTE(while_parsing_as_left_angle_bracket,none,
      "while parsing this '<' as a type parameter bracket", ())

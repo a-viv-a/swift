@@ -16,6 +16,7 @@
 
 #include "swift/AST/ASTWalker.h"
 #include "swift/AST/Concurrency.h"
+#include "swift/AST/DiagnosticEngine.h"
 #include "swift/AST/DiagnosticsSIL.h"
 #include "swift/AST/Expr.h"
 #include "swift/AST/ProtocolConformance.h"
@@ -107,17 +108,13 @@ static SILValue stripFunctionConversions(SILValue val) {
 
 /// Find the most conservative diagnostic behavior by taking the max over all
 /// DiagnosticBehavior for the captured values.
-static std::optional<DiagnosticBehavior>
+static ConcurrencyDiagnosticBehavior
 getDiagnosticBehaviorLimitForOperands(SILFunction *fn,
                                       ArrayRef<Operand *> capturedValues) {
-  std::optional<DiagnosticBehavior> diagnosticBehavior;
+  ConcurrencyDiagnosticBehavior diagnosticBehavior;
   for (auto value : capturedValues) {
-    auto lhs = diagnosticBehavior.value_or(DiagnosticBehavior::Unspecified);
     auto limit = value->get()->getType().getConcurrencyDiagnosticBehavior(fn);
-    auto rhs = limit.value_or(DiagnosticBehavior::Unspecified);
-    auto result = lhs.merge(rhs);
-    if (result != DiagnosticBehavior::Unspecified)
-      diagnosticBehavior = result;
+    diagnosticBehavior = diagnosticBehavior.merge(limit);
   }
   return diagnosticBehavior;
 }
@@ -388,7 +385,7 @@ static InFlightDiagnostic diagnoseNote(const PartitionOp &op, Diag<T...> diag,
 // Helper to emit unknown pattern errors with diagnostic context
 static void
 emitUnknownPatternErrorHelper(const char *emitterName, SILInstruction *inst,
-                              std::optional<DiagnosticBehavior> behaviorLimit,
+                              ConcurrencyDiagnosticBehavior behaviorLimit,
                               const char *file, int line) {
   if (shouldAbortOnUnknownPatternMatchError()) {
     llvm::report_fatal_error(
@@ -403,7 +400,7 @@ emitUnknownPatternErrorHelper(const char *emitterName, SILInstruction *inst,
                            << "  Location: " << file << ":" << line << "\n");
 
   diagnoseError(inst, diag::regionbasedisolation_unknown_pattern)
-      .limitBehaviorIf(behaviorLimit);
+      .limitBehaviorForConcurrency(behaviorLimit);
 }
 
 #ifdef EMIT_UNKNOWN_PATTERN_ERROR
@@ -876,7 +873,7 @@ public:
 
   SILFunction *getFunction() const { return sendingOp->getFunction(); }
 
-  std::optional<DiagnosticBehavior> getBehaviorLimit() const {
+  ConcurrencyDiagnosticBehavior getBehaviorLimit() const {
     return sendingOp->get()->getType().getConcurrencyDiagnosticBehavior(
         getFunction());
   }
@@ -892,7 +889,7 @@ public:
                                   ApplyIsolationCrossing isolationCrossing) {
     // Emit the short error.
     diagnoseError(loc, diag::regionbasedisolation_named_send_yields_race, name)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     // Then emit the note with greater context.
     auto descriptiveKindStr =
@@ -925,7 +922,7 @@ public:
                                   const ValueDecl *callee) {
     // Emit the short error.
     diagnoseError(loc, diag::regionbasedisolation_named_send_yields_race, name)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     // Then emit the note with greater context.
     auto descriptiveKindStr =
@@ -949,7 +946,7 @@ public:
                                                  Identifier name) {
     // Emit the short error.
     diagnoseError(loc, diag::regionbasedisolation_named_send_yields_race, name)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     diagnoseNote(
         loc, diag::regionbasedisolation_named_nonisolated_asynclet_name, name);
@@ -960,7 +957,7 @@ public:
                                   ApplyIsolationCrossing isolationCrossing) {
     diagnoseError(loc, diag::regionbasedisolation_type_send_yields_race,
                   inferredType)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     auto calleeIsolationStr =
         SILIsolationInfo::printActorIsolationForDiagnostics(
@@ -983,7 +980,7 @@ public:
   void emitNamedUseofStronglySentValue(SILLocation loc, Identifier name) {
     // Emit the short error.
     diagnoseError(loc, diag::regionbasedisolation_named_send_yields_race, name)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     // Then emit the note with greater context.
     diagnoseNote(
@@ -997,7 +994,7 @@ public:
   void emitTypedUseOfStronglySentValue(SILLocation loc, Type inferredType) {
     diagnoseError(loc, diag::regionbasedisolation_type_send_yields_race,
                   inferredType)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
     if (auto callee = getSendingCallee()) {
       diagnoseNote(loc,
                    diag::regionbasedisolation_typed_use_after_sending_callee,
@@ -1015,7 +1012,7 @@ public:
       ApplyIsolationCrossing isolationCrossing) {
     // Emit the short error.
     diagnoseError(loc, diag::regionbasedisolation_named_send_yields_race, name)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     auto descriptiveKindStr =
         namedValuesIsolationInfo.printForDiagnostics(getFunction());
@@ -1038,7 +1035,7 @@ public:
       ApplyIsolationCrossing isolationCrossing) {
     diagnoseError(loc, diag::regionbasedisolation_type_send_yields_race,
                   inferredType)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     auto calleeIsolationStr =
         SILIsolationInfo::printActorIsolationForDiagnostics(
@@ -1538,19 +1535,24 @@ public:
     return neverSent.dyn_cast<SILInstruction *>();
   }
 
-  std::optional<DiagnosticBehavior> getBehaviorLimit() const {
+  ConcurrencyDiagnosticBehavior getBehaviorLimit() const {
+    auto behavior =
+        sendingOperand->get()->getType().getConcurrencyDiagnosticBehavior(
+            getOperand()->getFunction());
+
+    // TODO: potential mistake so i didn't translate literally. Need to decide
+    // what is correct here; old behavior would *override* with warning, merging
+    // seems more appropriate when `@preconcurrency import` is also the case...
+
     // If the failure is due to an isolated conformance, downgrade the error
     // to a warning prior to Swift 7.
-    if (isolationRegionInfo.getIsolationInfo().getIsolatedConformance() &&
-        !sendingOperand->get()
-             ->getType()
-             .getASTType()
-             ->getASTContext()
-             .isLanguageModeAtLeast(LanguageMode::future))
-      return DiagnosticBehavior::Warning;
+    if (isolationRegionInfo.getIsolationInfo().getIsolatedConformance())
+      behavior =
+          behavior.merge(ConcurrencyDiagnosticBehavior::forLanguageStaging(
+              DiagnosticBehavior::Warning, LanguageMode::future,
+              sendingOperand->get()->getType().getASTType()->getASTContext()));
 
-    return sendingOperand->get()->getType().getConcurrencyDiagnosticBehavior(
-        getOperand()->getFunction());
+    return behavior;
   }
 
   /// Attempts to retrieve and return the callee declaration.
@@ -1574,14 +1576,14 @@ public:
   void emitUnknownUse(SILLocation loc) {
     // TODO: This will eventually be an unknown pattern error.
     diagnoseError(loc, diag::regionbasedisolation_task_or_actor_isolated_sent)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
   }
 
   void emitPassToApply(SILLocation loc, Type inferredType,
                        ApplyIsolationCrossing crossing) {
     diagnoseError(loc, diag::regionbasedisolation_type_send_yields_race,
                   inferredType)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     auto descriptiveKindStr =
         getIsolationRegionInfo().printForDiagnostics(getFunction());
@@ -1642,7 +1644,7 @@ public:
                                                    Type inferredType) {
     diagnoseError(loc, diag::regionbasedisolation_type_send_yields_race,
                   inferredType)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     auto descriptiveKindStr =
         getIsolationRegionInfo().printForDiagnostics(getFunction());
@@ -1669,7 +1671,7 @@ public:
     diagnoseError(partialApplyOp,
                   diag::regionbasedisolation_typed_tns_passed_sending_closure,
                   descriptiveKindStr)
-        .limitBehaviorIf(getDiagnosticBehaviorLimitForOperands(
+        .limitBehaviorForConcurrency(getDiagnosticBehaviorLimitForOperands(
             actualUse->getFunction(), {actualUse}));
 
     descriptiveKindStr =
@@ -1694,7 +1696,7 @@ public:
     diagnoseError(partialApplyOp,
                   diag::regionbasedisolation_typed_tns_passed_sending_closure,
                   descriptiveKindStr)
-        .limitBehaviorIf(getDiagnosticBehaviorLimitForOperands(
+        .limitBehaviorForConcurrency(getDiagnosticBehaviorLimitForOperands(
             actualUse->getFunction(), {actualUse}));
 
     // If we have a closure capture box, emit a special diagnostic.
@@ -1740,7 +1742,7 @@ public:
       diagnoseError(loc,
                     diag::regionbasedisolation_typed_tns_passed_sending_closure,
                     descriptiveKindStr)
-          .limitBehaviorIf(behaviorLimit);
+          .limitBehaviorForConcurrency(behaviorLimit);
     };
 
     if (capturedOperands.size() == 1) {
@@ -1795,7 +1797,7 @@ public:
 
   void emitNamedOnlyError(SILLocation loc, Identifier name) {
     diagnoseError(loc, diag::regionbasedisolation_named_send_yields_race, name)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
   }
 
   void emitNamedAsyncLetCapture(SILLocation loc, Identifier name,
@@ -2389,7 +2391,7 @@ public:
 
   SILFunction *getFunction() const { return inoutSendingParam->getFunction(); }
 
-  std::optional<DiagnosticBehavior> getBehaviorLimit() const {
+  ConcurrencyDiagnosticBehavior getBehaviorLimit() const {
     return inoutSendingParam->getType().getConcurrencyDiagnosticBehavior(
         getFunction());
   }
@@ -2415,7 +2417,7 @@ public:
     diagnoseError(
         loc, diag::regionbasedisolation_inout_sending_cannot_be_returned_param,
         *inoutSendingParamName)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
     if (isolationInfo->isActorIsolated()) {
       diagnoseNote(
           loc,
@@ -2449,7 +2451,7 @@ public:
     diagnoseError(
         loc, diag::regionbasedisolation_inout_sending_cannot_be_returned_value,
         *erroringEltName)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
     if (isolationInfo->isActorIsolated()) {
       diagnoseNote(
           loc,
@@ -2490,7 +2492,7 @@ public:
         diag::
             regionbasedisolation_inout_sending_cannot_be_returned_value_result,
         declRef.getAbstractFunctionDecl())
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
 
     if (isolationInfo->isActorIsolated()) {
       diagnoseNote(
@@ -3027,7 +3029,7 @@ public:
 
   SILFunction *getFunction() const { return inoutSendingParam->getFunction(); }
 
-  std::optional<DiagnosticBehavior> getBehaviorLimit() const {
+  ConcurrencyDiagnosticBehavior getBehaviorLimit() const {
     return inoutSendingParam->getType().getConcurrencyDiagnosticBehavior(
         getFunction());
   }
@@ -3100,7 +3102,7 @@ void InOutSendingNotDisconnectedAtExitDiagnosticEmitter::emit() {
       functionExitingInst,
       diag::regionbasedisolation_inout_sending_cannot_be_actor_isolated,
       *varName, descriptiveKindStr)
-      .limitBehaviorIf(getBehaviorLimit());
+      .limitBehaviorForConcurrency(getBehaviorLimit());
 
   diagnoseNote(
       functionExitingInst,
@@ -3164,7 +3166,7 @@ public:
 
   SILFunction *getFunction() const { return srcOperand->getFunction(); }
 
-  std::optional<DiagnosticBehavior> getConcurrencyDiagnosticBehavior() const {
+  ConcurrencyDiagnosticBehavior getConcurrencyDiagnosticBehavior() const {
     return outSendingResult->getType().getConcurrencyDiagnosticBehavior(
         getFunction());
   }
@@ -3304,7 +3306,7 @@ void AssignNeverSendableIntoSendingResultDiagnosticEmitter::emit() {
         srcOperand,
         diag::regionbasedisolation_out_sending_cannot_be_actor_isolated_named,
         *varName, descriptiveKindStr)
-        .limitBehaviorIf(getConcurrencyDiagnosticBehavior());
+        .limitBehaviorForConcurrency(getConcurrencyDiagnosticBehavior());
 
     diagnoseNote(
         srcOperand,
@@ -3320,7 +3322,7 @@ void AssignNeverSendableIntoSendingResultDiagnosticEmitter::emit() {
       srcOperand,
       diag::regionbasedisolation_out_sending_cannot_be_actor_isolated_type,
       type, descriptiveKindStr)
-      .limitBehaviorIf(getConcurrencyDiagnosticBehavior());
+      .limitBehaviorForConcurrency(getConcurrencyDiagnosticBehavior());
 
   diagnoseNote(
       srcOperand,
@@ -3442,7 +3444,7 @@ struct NonSendableIsolationCrossingResultDiagnosticEmitter {
     return diagnoseNote(inst->getLoc(), diag, std::forward<U>(args)...);
   }
 
-  std::optional<DiagnosticBehavior> getBehaviorLimit() const {
+  ConcurrencyDiagnosticBehavior getBehaviorLimit() const {
     return representative->getType().getConcurrencyDiagnosticBehavior(
         representative->getFunction());
   }
@@ -3520,12 +3522,12 @@ void NonSendableIsolationCrossingResultDiagnosticEmitter::emit() {
     diagnoseError(error.op->getSourceInst(),
                   diag::rbi_isolation_crossing_result, type, calleeIsolationStr,
                   getCalledDecl(), callerIsolationStr)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
   } else {
     diagnoseError(error.op->getSourceInst(),
                   diag::rbi_isolation_crossing_result_no_decl, type,
                   calleeIsolationStr, callerIsolationStr)
-        .limitBehaviorIf(getBehaviorLimit());
+        .limitBehaviorForConcurrency(getBehaviorLimit());
   }
   if (type->is<FunctionType>()) {
     diagnoseNote(error.op->getSourceInst(),
@@ -3612,18 +3614,14 @@ public:
     return functionExitingInst->getFunction();
   }
 
-  std::optional<DiagnosticBehavior> getBehaviorLimit() const {
+  ConcurrencyDiagnosticBehavior getBehaviorLimit() const {
     auto first =
         firstInOutSendingParam->getType().getConcurrencyDiagnosticBehavior(
             getFunction());
     auto second =
         secondInOutSendingParam->getType().getConcurrencyDiagnosticBehavior(
             getFunction());
-    if (!first)
-      return second;
-    if (!second)
-      return first;
-    return first->merge(*second);
+    return first.merge(second);
   }
 
   void emitUnknownPatternError() {
@@ -3694,7 +3692,7 @@ void InOutSendingParametersInSameRegionDiagnosticEmitter::emit() {
   diagnoseError(functionExitingInst,
                 diag::regionbasedisolation_inout_sending_in_same_region,
                 *firstName, *secondName)
-      .limitBehaviorIf(getBehaviorLimit());
+      .limitBehaviorForConcurrency(getBehaviorLimit());
 
   diagnoseNote(functionExitingInst,
                diag::regionbasedisolation_inout_sending_in_same_region_note,
@@ -3765,7 +3763,7 @@ struct IncompatibleRegionMergeDiagnosticEmitter {
 
   SILFunction *getFunction() const { return op->getFunction(); }
 
-  std::optional<DiagnosticBehavior> getBehaviorLimit() const {
+  ConcurrencyDiagnosticBehavior getBehaviorLimit() const {
     return op->get()->getType().getConcurrencyDiagnosticBehavior(getFunction());
   }
 
@@ -3824,7 +3822,7 @@ void IncompatibleRegionMergeDiagnosticEmitter::emitUnknown() {
                 diag::regionbasedisolation_merge_region_failure_error_unknown,
                 *srcName, srcIsolationStr, *dstName, dstIsolationStr,
                 !srcIsolation->isTaskIsolated())
-      .limitBehaviorIf(getBehaviorLimit());
+      .limitBehaviorForConcurrency(getBehaviorLimit());
   diagnoseNote(
       op->getUser(),
       diag::regionbasedisolation_merge_region_failure_error_unknown_note,
@@ -3869,7 +3867,7 @@ void IncompatibleRegionMergeDiagnosticEmitter::emitAssign() {
                 diag::regionbasedisolation_merge_region_failure_error_assign,
                 *srcName, srcIsolationStr, *dstName, dstIsolationStr,
                 !srcIsolation->isTaskIsolated())
-      .limitBehaviorIf(getBehaviorLimit());
+      .limitBehaviorForConcurrency(getBehaviorLimit());
   diagnoseNote(
       op->getUser(),
       diag::regionbasedisolation_merge_region_failure_error_assign_note,
@@ -3921,7 +3919,7 @@ void IncompatibleRegionMergeDiagnosticEmitter::emitNonisolatedFunction() {
       diag::regionbasedisolation_merge_region_failure_error_nonisolatedfunction,
       *srcName, srcIsolationStr, *dstName, dstIsolationStr, declRef.getDecl(),
       !srcIsolation->isTaskIsolated())
-      .limitBehaviorIf(getBehaviorLimit());
+      .limitBehaviorForConcurrency(getBehaviorLimit());
   diagnoseNote(
       op->getUser(),
       diag::
@@ -3967,7 +3965,7 @@ void IncompatibleRegionMergeDiagnosticEmitter::emitIsolatedFunction() {
                 regionbasedisolation_merge_region_failure_error_functionisolation_type,
             expr->findOriginalType(), srcIsolationStr, declRef.getDecl(),
             dstIsolationStr, !srcIsolation->isTaskIsolated())
-            .limitBehaviorIf(getBehaviorLimit());
+            .limitBehaviorForConcurrency(getBehaviorLimit());
         return;
       }
     }
@@ -3978,7 +3976,7 @@ void IncompatibleRegionMergeDiagnosticEmitter::emitIsolatedFunction() {
               regionbasedisolation_merge_region_failure_error_functionisolation_type,
           arg->getDecl()->getInterfaceType(), srcIsolationStr,
           declRef.getDecl(), dstIsolationStr, !srcIsolation->isTaskIsolated())
-          .limitBehaviorIf(getBehaviorLimit());
+          .limitBehaviorForConcurrency(getBehaviorLimit());
       return;
     }
     return emitUnknownPatternError();
@@ -3988,7 +3986,7 @@ void IncompatibleRegionMergeDiagnosticEmitter::emitIsolatedFunction() {
       diag::regionbasedisolation_merge_region_failure_error_functionisolation,
       *srcName, srcIsolationStr, declRef.getDecl(), dstIsolationStr,
       !srcIsolation->isTaskIsolated())
-      .limitBehaviorIf(getBehaviorLimit());
+      .limitBehaviorForConcurrency(getBehaviorLimit());
 }
 
 void IncompatibleRegionMergeDiagnosticEmitter::emitCast() {
@@ -4036,7 +4034,7 @@ void IncompatibleRegionMergeDiagnosticEmitter::emitCast() {
                 diag::regionbasedisolation_merge_region_failure_error_cast,
                 *srcName, srcIsolationStr, cast.getTargetFormalType(),
                 dstIsolationStr, !srcIsolation->isTaskIsolated())
-      .limitBehaviorIf(getBehaviorLimit());
+      .limitBehaviorForConcurrency(getBehaviorLimit());
 }
 
 void IncompatibleRegionMergeDiagnosticEmitter::emit() {
@@ -4114,7 +4112,7 @@ void SendNonSendableImpl::emitVerbatimErrors() {
         if (auto behavior =
                 paramValue->getType().getConcurrencyDiagnosticBehavior(
                     info->getFunction());
-            behavior && *behavior == DiagnosticBehavior::Ignore) {
+            behavior.isIgnored()) {
           continue;
         }
         InOutSendingParametersInSameRegionDiagnosticEmitter diagnosticEmitter(

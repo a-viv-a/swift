@@ -19,14 +19,14 @@ func acceptMetaOnMainActor<T>(_: T.Type) { }
 // -------------------------------------------------------------------------
 nonisolated func staticCallThroughMetaSmuggled<T: Q>(_: T.Type) {
   let x: Q.Type = T.self
-  Task.detached { // expected-warning{{risks causing data races}}
+  Task.detached { // expected-warning{{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this will be an error in a future Swift language mode}}
     x.g() // expected-note{{closure captures 'x' which is accessible to code in the current task}}
   }
 }
 
 nonisolated func passMetaSmuggled<T: Q>(_: T.Type) {
   let x: Q.Type = T.self
-  Task.detached { // expected-warning{{risks causing data races}}
+  Task.detached { // expected-warning{{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this will be an error in a future Swift language mode}}
     acceptMeta(x) // expected-note{{closure captures 'x' which is accessible to code in the current task}}
   }
 }
@@ -79,14 +79,14 @@ nonisolated func passSendableToMainActorSmuggledAny<T: Sendable>(_: T.Type) asyn
 // -------------------------------------------------------------------------
 nonisolated func passMetaSmuggledAnyFromExistential(_ pqT: (P & Q).Type) {
   let x: P.Type = pqT
-  Task.detached { // expected-warning{{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+  Task.detached { // expected-warning{{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this will be an error in a future Swift language mode}}
     acceptMeta(x) // expected-note{{closure captures 'x' which is accessible to code in the current task}}
   }
 }
 
 @MainActor func passMetaSmuggledAnyFromExistential2(_ pqT: (P & Q).Type) {
   let x: P.Type = pqT
-  Task.detached { // expected-warning{{passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure}}
+  Task.detached { // expected-warning{{passing closure as a 'sending' parameter risks causing data races between main actor-isolated code and concurrent execution of the closure; this will be an error in a future Swift language mode}}
     acceptMeta(x) // expected-note{{closure captures 'x' which is accessible to main actor-isolated code}}
   }
 }
@@ -98,10 +98,12 @@ func testSendableMetatypeDowngrades() {
 
   func testWarning<T>(t: T.Type) { // expected-note {{consider making generic parameter 'T' conform to the 'SendableMetatype' protocol}} {{21-21=: SendableMetatype}}
     acceptsSendableMetatype(t) // expected-warning {{type 'T' does not conform to the 'SendableMetatype' protocol}}
+    // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
   }
 
   func testWarning<T: P>(t: T.Type) { // expected-note {{consider making generic parameter 'T' conform to the 'SendableMetatype' protocol}} {{24-24= & SendableMetatype}}
     acceptsSendableMetatype(t) // expected-warning {{type 'T' does not conform to the 'SendableMetatype' protocol}}
+    // expected-note@-1 {{downgraded to a warning by '@preconcurrency'}}
   }
 }
 
@@ -126,19 +128,19 @@ func acceptSendingAnyObjectR(_ s: sending AnyObject & R) { }
 @MainActor func passSendingExistential<T: P, U: AnyObject & P , V: R, W: AnyObject & R>(
   t: sending T, u: sending U, v: sending V, w: sending W
 ) {
-  acceptSendingP(S()) // expected-warning{{sending value of non-Sendable type 'S' risks causing data races}}
+  acceptSendingP(S()) // expected-warning{{sending value of non-Sendable type 'S' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{Passing main actor-isolated value of non-Sendable type 'S' as a 'sending' parameter to global function 'acceptSendingP' risks causing races}}
   // expected-note@-2{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingP(SC()) // expected-warning{{sending value of non-Sendable type 'SC'}}
+  acceptSendingP(SC()) // expected-warning{{sending value of non-Sendable type 'SC' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{Passing main actor-isolated value of non-Sendable type 'SC' as a 'sending' parameter to global function 'acceptSendingP' risks causing races}}' risks causing data races}}
   // expected-note@-2{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingAnyObjectP(SC()) // expected-warning{{sending value of non-Sendable type 'SC' risks causing data races}}
+  acceptSendingAnyObjectP(SC()) // expected-warning{{sending value of non-Sendable type 'SC' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{Passing main actor-isolated value of non-Sendable type 'SC' as a 'sending' parameter to global function 'acceptSendingAnyObjectP' risks causing races}}' risks causing data races}}
   // expected-note@-2{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingP(t) // expected-warning{{sending 't' risks causing data races}}
+  acceptSendingP(t) // expected-warning{{sending 't' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{main actor-isolated 't' is passed as a 'sending' parameter; Uses in callee may race with later main actor-isolated uses}}
   // expected-note@-2{{isolated conformance to protocol 'P' can be introduced he}}
-  acceptSendingAnyObjectP(u) // expected-warning{{sending value of non-Sendable type 'U' risks causing data races}}
+  acceptSendingAnyObjectP(u) // expected-warning{{sending value of non-Sendable type 'U' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{Passing main actor-isolated value of non-Sendable type 'U' as a 'sending' parameter to global function 'acceptSendingAnyObjectP' risks causing races inbetween main actor-isolated uses and uses reachable from 'acceptSendingAnyObjectP'}}
   // expected-note@-2{{isolated conformance to protocol 'P' can be introduced here}}
   // All of these are okay, because there are no isolated conformances to R.
@@ -154,14 +156,14 @@ func dynamicCastingExistential(
   _ s2: sending Any
 ) {
   if let s1p = s1 as? any P { // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-    acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races}}
+    acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races; this will be an error in a future Swift language mode}}
     // expected-note@-1{{task-isolated 's1p' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   } else {
     print(s1)
   }
 
   if let s2p = s2 as? any AnyObject & P { // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-    acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races}}
+    acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races; this will be an error in a future Swift language mode}}
     // expected-note@-1{{task-isolated 's2p' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   } else {
     print(s2)
@@ -192,14 +194,14 @@ func dynamicCastingGeneric(
   _ s2: sending some Any
 ) {
   if let s1p = s1 as? any P { // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-    acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races}}
+    acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races; this will be an error in a future Swift language mode}}
     // expected-note@-1{{task-isolated 's1p' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   } else {
     print(s1)
   }
 
   if let s2p = s2 as? any AnyObject & P { // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-    acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races}}
+    acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races; this will be an error in a future Swift language mode}}
     // expected-note@-1{{task-isolated 's2p' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   } else {
     print(s2)
@@ -245,11 +247,11 @@ func forceCastingExistential(
   _ s2: sending AnyObject
 ) {
   let s1p = s1 as! any P // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races}}
+  acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{task-isolated 's1p' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
 
   let s2p = s2 as! any AnyObject & P // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races}}
+  acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{task-isolated 's2p' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
 }
 
@@ -269,11 +271,11 @@ func forceCastingGeneric(
   _ s2: sending some AnyObject
 ) {
   let s1p = s1 as! any P // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races}}
+  acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{task-isolated 's1p' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
 
   let s2p = s2 as! any AnyObject & P // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races}}
+  acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{task-isolated 's2p' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
 }
 
@@ -282,11 +284,11 @@ func forceCastingGeneric(
   _ s2: sending some AnyObject
 ) {
   let s1p = s1 as! any P // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races}}
+  acceptSendingP(s1p) // expected-warning{{sending 's1p' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{main actor-isolated 's1p' is passed as a 'sending' parameter; Uses in callee may race with later main actor-isolated uses}}
 
   let s2p = s2 as! any AnyObject & P // expected-note{{isolated conformance to protocol 'P' can be introduced here}}
-  acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races}}
+  acceptSendingAnyObjectP(s2p) // expected-warning{{sending 's2p' risks causing data races; this will be an error in a future Swift language mode}}
   // expected-note@-1{{main actor-isolated 's2p' is passed as a 'sending' parameter; Uses in callee may race with later main actor-isolated uses}}
 }
 

@@ -1770,7 +1770,7 @@ bool SILIsolationInfo::isNonSendableType(SILType type, SILFunction *fn) {
   // Finally, if we are not supposed to ignore, then we have a true non-Sendable
   // type. Types whose diagnostics we are supposed to ignore, we want to treat
   // as Sendable.
-  return *behavior != DiagnosticBehavior::Ignore;
+  return !behavior.isIgnored();
 }
 
 SILIsolationInfo SILIsolationInfo::getFunctionIsolation(SILFunction *fn) {

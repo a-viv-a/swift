@@ -91,7 +91,8 @@ func testPreconcurrencyExplicitlyNonSendable() async {
   // expected-swift-5-warning @-2 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-3 {{'x' used after being passed as a 'sending' parameter; Later uses could race}}
   // expected-swift-6-warning @-4 {{sending 'x' risks causing data races}}
-  // expected-swift-6-note @-5 {{'x' used after being passed as a 'sending' parameter; Later uses could race}}
+  // expected-swift-6-note @-5 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-swift-6-note @-6 {{'x' used after being passed as a 'sending' parameter; Later uses could race}}
   useValue(x)
   // expected-swift-5-note @-1 {{access can happen concurrently}}
   // expected-swift-6-note @-2 {{access can happen concurrently}}
@@ -139,7 +140,8 @@ func testNeverTransferExplicit(_ x: PreCUncheckedExplicitlyNonSendableKlass) asy
   // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-2 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   // expected-swift-6-warning @-3 {{sending 'x' risks causing data races}}
-  // expected-swift-6-note @-4 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
+  // expected-swift-6-note @-4 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-swift-6-note @-5 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
 }
 
 func testNeverTransferNormal(_ x: PostCUncheckedNonSendableKlass) async {
@@ -167,7 +169,8 @@ func testNeverTransferInexactMatchExplicit(_ x: (PreCUncheckedExplicitlyNonSenda
   // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-2 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   // expected-swift-6-warning @-3 {{sending 'x' risks causing data races}}
-  // expected-swift-6-note @-4 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
+  // expected-swift-6-note @-4 {{downgraded to a warning by '@preconcurrency'}}
+  // expected-swift-6-note @-5 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
 }
 
 ////////////////////////////////////////
@@ -249,35 +252,42 @@ extension MyActor {
 // warn.
 func taskIsolatedCaptureInSendingClosureLiteral(_ x: PreCUncheckedExplicitlyNonSendableKlass) {
   Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
     print(x) // expected-note {{closure captures 'x' which is accessible to code in the current task}}
   }
 
   takeClosure { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
     print(x) // expected-note {{closure captures 'x' which is accessible to code in the current task}}
   }
 
   takeClosureAndParam(PreCUncheckedExplicitlyNonSendableKlass()) { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
     print(x) // expected-note {{closure captures 'x' which is accessible to code in the current task}}
   }
 
   let y = (x, x)
   Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
     print(y) // expected-note {{closure captures 'y' which is accessible to code in the current task}}
   }
 
   let z = (x, y)
   Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
     print(y, z) // expected-note @:11 {{closure captures non-Sendable 'y'}}
     // expected-note @-1:14 {{closure captures non-Sendable 'z'}}
   }
 
   let w = PreCUncheckedExplicitlyNonSendableKlassPair(lhs: x, rhs: x)
   Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
     print(w) // expected-note {{closure captures 'w' which is accessible to code in the current task}}
   }
 
   let u = Pair(lhs: x, rhs: x)
   Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
     print(u) // expected-note {{closure captures 'u' which is accessible to code in the current task}}
   }
 }
@@ -285,35 +295,42 @@ func taskIsolatedCaptureInSendingClosureLiteral(_ x: PreCUncheckedExplicitlyNonS
 extension MyActor {
   func actorIsolatedCaptureInSendingClosureLiteral(_ x: PreCUncheckedExplicitlyNonSendableKlass) {
     Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
       print(x) // expected-note {{closure captures 'self'-isolated 'x'}}
     }
 
     takeClosure { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
       print(x) // expected-note {{closure captures 'self'-isolated 'x'}}
     }
 
     takeClosureAndParam(PreCUncheckedExplicitlyNonSendableKlass()) { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
       print(x) // expected-note {{closure captures 'self'-isolated 'x'}}
     }
 
     let y = (x, x)
     Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
       print(y) // expected-note {{closure captures 'y' which is accessible to 'self'-isolated code}}
     }
 
     let z = (x, y)
     Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
       print(y, z) // expected-note @:13 {{closure captures non-Sendable 'y'}}
       // expected-note @-1:16 {{closure captures non-Sendable 'z'}}
     }
 
     let w = PreCUncheckedExplicitlyNonSendableKlassPair(lhs: x, rhs: x)
     Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
       print(w) // expected-note {{closure captures 'w' which is accessible to 'self'-isolated code}}
     }
 
     let u = Pair(lhs: x, rhs: x)
     Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-6-note @-1 {{downgraded to a warning by '@preconcurrency'}}
       print(u) // expected-note {{closure captures 'u' which is accessible to 'self'-isolated code}}
     }
   }
