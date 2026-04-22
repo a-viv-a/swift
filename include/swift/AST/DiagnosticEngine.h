@@ -1263,6 +1263,10 @@ namespace swift {
     /// Send \c diag to all diagnostic consumers.
     void emitDiagnostic(const Diagnostic &diag);
 
+    /// Build the category chain (leaf + parent groups) for a diagnostic's
+    /// DiagnosticInfo based on its diagnostic group.
+    void buildCategoryChain(DiagnosticInfo &diagInfo, const Diagnostic &diag);
+
     /// Retrieve the set of child notes that describe how the generated
     /// source buffer was derived, e.g., a macro expansion backtrace.
     std::vector<Diagnostic> getGeneratedSourceBufferNotes(SourceLoc loc);

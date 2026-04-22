@@ -46,6 +46,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
@@ -1699,6 +1700,56 @@ DiagnosticEngine::getGeneratedSourceBufferNotes(SourceLoc loc) {
   } while (true);
 }
 
+void DiagnosticEngine::buildCategoryChain(DiagnosticInfo &diagInfo,
+                                          const Diagnostic &diag) {
+  auto groupID = diag.getGroupID();
+  if (groupID == DiagGroupID::no_group)
+    return;
+
+  const auto &diagGroup = getDiagGroupInfoByID(groupID);
+
+  auto getDiagnosticGroupDocURL =
+      [&](const DiagGroupInfo &group) -> std::string {
+    if (group.toolchainLocalDocumentation) {
+      std::string localPath(getLocalDiagnosticDocumentationPath());
+      if (!localPath.empty()) {
+        if (localPath.back() != '/')
+          localPath += "/";
+        localPath += group.documentationFile;
+        localPath += ".md";
+        return localPath;
+      }
+      return "";
+    }
+
+    std::string docURL(getDiagnosticDocumentationPath());
+    if (!docURL.empty() && docURL.back() != '/')
+      docURL += "/";
+    docURL += group.documentationFile;
+    return docURL;
+  };
+
+  // Set the leaf category's documentation URL.
+  diagInfo.setCategoryDocumentationURL(getDiagnosticGroupDocURL(diagGroup));
+
+  // Append parent groups by walking up supergroups.
+  auto currentID = groupID;
+  while (true) {
+    const auto &current = getDiagGroupInfoByID(currentID);
+    if (current.supergroups.empty())
+      break;
+    auto parentID = current.supergroups[0];
+    const auto &parent = getDiagGroupInfoByID(parentID);
+    std::string parentDocURL(getDiagnosticDocumentationPath());
+    if (!parentDocURL.empty() && parentDocURL.back() != '/')
+      parentDocURL += "/";
+    parentDocURL += parent.documentationFile;
+    diagInfo.CategoryChain.push_back(
+        {StringRef(parent.name), std::move(parentDocURL)});
+    currentID = parentID;
+  }
+}
+
 void DiagnosticEngine::emitDiagnostic(const Diagnostic &diagnostic) {
 
   ArrayRef<Diagnostic> childNotes = diagnostic.getChildNotes();
@@ -1730,6 +1781,9 @@ void DiagnosticEngine::emitDiagnostic(const Diagnostic &diagnostic) {
         continue;
       assert(child->Kind == DiagnosticKind::Note &&
              "Expected child diagnostics to all be notes?!");
+
+      buildCategoryChain(*child, childNotes[i]);
+      
       childInfo.push_back(*child);
     }
     TinyPtrVector<DiagnosticInfo *> childInfoPtrs;
@@ -1740,51 +1794,7 @@ void DiagnosticEngine::emitDiagnostic(const Diagnostic &diagnostic) {
 
     // Capture information about the diagnostic group and its documentation
     // URL. Build the full category chain (leaf + parents).
-    auto groupID = diagnostic.getGroupID();
-    if (groupID != DiagGroupID::no_group) {
-      const auto &diagGroup = getDiagGroupInfoByID(groupID);
-
-      auto getDiagnosticGroupDocURL =
-          [&](const DiagGroupInfo &diagGroup) -> std::string {
-        if (diagGroup.toolchainLocalDocumentation) {
-          std::string localPath(getLocalDiagnosticDocumentationPath());
-          if (!localPath.empty()) {
-            if (localPath.back() != '/')
-              localPath += "/";
-            localPath += diagGroup.documentationFile;
-            localPath += ".md";
-            return localPath;
-          }
-          return "";
-        }
-
-        std::string docURL(getDiagnosticDocumentationPath());
-        if (!docURL.empty() && docURL.back() != '/')
-          docURL += "/";
-        docURL += diagGroup.documentationFile;
-        return docURL;
-      };
-
-      // Set the leaf category's documentation URL.
-      info->setCategoryDocumentationURL(getDiagnosticGroupDocURL(diagGroup));
-
-      // Append parent groups by walking up supergroups.
-      auto currentID = groupID;
-      while (true) {
-        const auto &current = getDiagGroupInfoByID(currentID);
-        if (current.supergroups.empty())
-          break;
-        auto parentID = current.supergroups[0];
-        const auto &parent = getDiagGroupInfoByID(parentID);
-        std::string parentDocURL(getDiagnosticDocumentationPath());
-        if (!parentDocURL.empty() && parentDocURL.back() != '/')
-          parentDocURL += "/";
-        parentDocURL += parent.documentationFile;
-        info->CategoryChain.push_back(
-            {StringRef(parent.name), std::move(parentDocURL)});
-        currentID = parentID;
-      }
-    }
+    buildCategoryChain(*info, diagnostic);
 
     for (auto &consumer : Consumers) {
       consumer->handleDiagnostic(SourceMgr, *info);
