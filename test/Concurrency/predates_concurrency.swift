@@ -100,7 +100,7 @@ func testCalls(x: X) {
   // expected-complete-warning @-1 {{call to main actor-isolated global function 'onMainActorAlways()' in a synchronous nonisolated context}}
 
   // Ok with minimal/targeted concurrency, Not ok with complete.
-  let _: () -> Void = onMainActorAlways // expected-complete-warning {{converting function value of type '@MainActor () -> ()' to '() -> Void' loses global actor 'MainActor'}}
+  let _: () -> Void = onMainActorAlways // expected-complete-warning {{converting function value of type '@MainActor () -> ()' to '() -> Void' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
 
   let c = MyModelClass()
 
@@ -109,13 +109,13 @@ func testCalls(x: X) {
 }
 
 func testCallsWithAsync() async {
-  onMainActorAlways() // expected-warning{{main actor-isolated global function 'onMainActorAlways()' cannot be called from outside of the actor}} {{3-3=await }}
+  onMainActorAlways() // expected-warning{{main actor-isolated global function 'onMainActorAlways()' cannot be called from outside of the actor; this is an error in the Swift 6 language mode}} {{3-3=await }}
 
-  let _: () -> Void = onMainActorAlways // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> Void' loses global actor 'MainActor'}}
+  let _: () -> Void = onMainActorAlways // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> Void' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
 
-  let c = MyModelClass() // expected-minimal-targeted-warning{{main actor-isolated initializer 'init()' cannot be called from outside of the actor}} {{11-11=await }}
+  let c = MyModelClass() // expected-minimal-targeted-warning{{main actor-isolated initializer 'init()' cannot be called from outside of the actor; this is an error in the Swift 6 language mode}} {{11-11=await }}
 
-  c.f() // expected-warning{{main actor-isolated instance method 'f()' cannot be called from outside of the actor}} {{3-3=await }}
+  c.f() // expected-warning{{main actor-isolated instance method 'f()' cannot be called from outside of the actor; this is an error in the Swift 6 language mode}} {{3-3=await }}
 }
 
 // ---------------------------------------------------------------------------
@@ -136,7 +136,7 @@ struct S2: Q {
 }
 
 struct S3: Q, Sendable {
-  var ns: NS // expected-warning{{stored property 'ns' of 'Sendable'-conforming struct 'S3' has non-Sendable type 'NS'}}
+  var ns: NS // expected-warning{{stored property 'ns' of 'Sendable'-conforming struct 'S3' has non-Sendable type 'NS'; this is an error in the Swift 6 language mode}}
 }
 
 // ---------------------------------------------------------------------------
@@ -224,7 +224,7 @@ protocol NotIsolated {
   func requirement()
 }
 
-// expected-complete-warning@+1{{conformance of 'MainActorPreconcurrency' to protocol 'NotIsolated' crosses into main actor-isolated code and can cause data races}}
+// expected-complete-warning@+1{{conformance of 'MainActorPreconcurrency' to protocol 'NotIsolated' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode}}
 extension MainActorPreconcurrency: NotIsolated {
   // expected-complete-note@-1{{turn data races into runtime errors with '@preconcurrency'}}{{36-36=@preconcurrency }}
   // expected-complete-note@-2{{isolate this conformance to the main actor with '@MainActor'}}
@@ -364,7 +364,7 @@ func testSendableMetatypeDowngrades() {
     acceptsSendableMetatype(t)
     // expected-complete-warning@-1 {{type 'T' does not conform to the 'SendableMetatype' protocol}}
     acceptsSendableMetatypeStrict(t)
-    // expected-complete-warning@-1 {{type 'T' does not conform to the 'SendableMetatype' protocol}}
+    // expected-complete-warning@-1 {{type 'T' does not conform to the 'SendableMetatype' protocol; this is an error in the Swift 6 language mode}}
   }
 }
 

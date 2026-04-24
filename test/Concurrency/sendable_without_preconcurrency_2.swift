@@ -24,12 +24,12 @@ struct MyType {
 }
 
 struct MyType2: Sendable {
-  var nsc: NonStrictClass // expected-warning{{stored property 'nsc' of 'Sendable'-conforming struct 'MyType2' has non-Sendable type 'NonStrictClass'}}
-  var ns: NS // expected-warning{{stored property 'ns' of 'Sendable'-conforming struct 'MyType2' has non-Sendable type 'NS'}}
+  var nsc: NonStrictClass // expected-warning{{stored property 'nsc' of 'Sendable'-conforming struct 'MyType2' has non-Sendable type 'NonStrictClass'; this is an error in the Swift 6 language mode}}
+  var ns: NS // expected-warning{{stored property 'ns' of 'Sendable'-conforming struct 'MyType2' has non-Sendable type 'NS'; this is an error in the Swift 6 language mode}}
 }
 
 func testA(ns: NS, mt: MyType, mt2: MyType2, sc: StrictClass, nsc: NonStrictClass) async {
-  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(ns) // expected-tns-note {{closure captures 'ns' which is accessible to code in the current task}}
     print(mt)
     print(mt2)
@@ -40,19 +40,19 @@ func testA(ns: NS, mt: MyType, mt2: MyType2, sc: StrictClass, nsc: NonStrictClas
 
 // No warning with targeted: MyType is Sendable because we suppressed NonStrictClass's warning.
 func testB(mt: MyType) async {
-  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(mt) // expected-tns-note {{closure captures 'mt' which is accessible to code in the current task}}
   }
 }
 
 func testNonStrictClass(_ mt: NonStrictClass) async {
-  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(mt) // expected-tns-note {{closure captures 'mt' which is accessible to code in the current task}}
   }
 }
 
 func testStrictClass(_ mt: StrictClass) async {
-  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(mt) // expected-tns-note {{closure captures 'mt' which is accessible to code in the current task}}
   }
 }
@@ -61,20 +61,20 @@ extension NonStrictStruct: @unchecked @retroactive Sendable { }
 
 class StrictSubclass: StrictClass {
   override func send(_ body: () -> ()) {}
-  override func dontSend(_ body: @Sendable () -> ()) {} // expected-warning {{declaration 'dontSend' has a type with different sendability from any potential overrides}}
+  override func dontSend(_ body: @Sendable () -> ()) {} // expected-warning {{declaration 'dontSend' has a type with different sendability from any potential overrides; this is an error in the Swift 6 language mode}}
 }
 
 struct StrictConformer: StrictProtocol {
   func send(_ body: () -> Void) {}
-  func dontSend(_ body: @Sendable () -> Void) {} // expected-warning {{sendability of function types in instance method 'dontSend' does not match requirement in protocol 'StrictProtocol'}}
+  func dontSend(_ body: @Sendable () -> Void) {} // expected-warning {{sendability of function types in instance method 'dontSend' does not match requirement in protocol 'StrictProtocol'; this is an error in the Swift 6 language mode}}
 }
 
 class NonStrictSubclass: NonStrictClass {
   override func send(_ body: () -> ()) {}
-  override func dontSend(_ body: @Sendable () -> ()) {} // expected-warning {{declaration 'dontSend' has a type with different sendability from any potential overrides}}
+  override func dontSend(_ body: @Sendable () -> ()) {} // expected-warning {{declaration 'dontSend' has a type with different sendability from any potential overrides; this is an error in the Swift 6 language mode}}
 }
 
 struct NonStrictConformer: NonStrictProtocol {
   func send(_ body: () -> Void) {}
-  func dontSend(_ body: @Sendable () -> Void) {} // expected-warning {{sendability of function types in instance method 'dontSend' does not match requirement in protocol 'NonStrictProtocol'}}
+  func dontSend(_ body: @Sendable () -> Void) {} // expected-warning {{sendability of function types in instance method 'dontSend' does not match requirement in protocol 'NonStrictProtocol'; this is an error in the Swift 6 language mode}}
 }

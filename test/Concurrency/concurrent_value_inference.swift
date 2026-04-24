@@ -115,22 +115,22 @@ func testCV(
   fps: FrozenPublicStruct, fpe: FrozenPublicEnum,
   hf: HasFunctions
 ) {
-  acceptCV(c1) // expected-warning {{type 'C1' does not conform to the 'Sendable' protocol}}
+  acceptCV(c1) // expected-warning {{type 'C1' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   acceptCV(c2)
   acceptCV(c3)
   acceptCV(c4)
   acceptCV(s1)
-  acceptCV(e1) // expected-warning {{type 'E1' does not conform to the 'Sendable'}}
+  acceptCV(e1) // expected-warning {{type 'E1' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   acceptCV(e2)
   acceptCV(gs1)
-  acceptCV(gs2) // expected-warning {{type 'GS2<Int>' does not conform to the 'Sendable' protocol}}
+  acceptCV(gs2) // expected-warning {{type 'GS2<Int>' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 
   // Not available due to recursive conformance dependencies.
-  acceptCV(bc) // expected-warning {{type 'Bitcode' does not conform to the 'Sendable' protocol}}
+  acceptCV(bc) // expected-warning {{type 'Bitcode' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 
   // Not available due to "public".
-  acceptCV(ps) // expected-warning {{type 'PublicStruct' does not conform to the 'Sendable' protocol}}
-  acceptCV(pe) // expected-warning {{type 'PublicEnum' does not conform to the 'Sendable' protocol}}
+  acceptCV(ps) // expected-warning {{type 'PublicStruct' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
+  acceptCV(pe) // expected-warning {{type 'PublicEnum' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 
   // Public is okay when also @frozen.
   acceptCV(fps)

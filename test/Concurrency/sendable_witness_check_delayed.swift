@@ -15,5 +15,5 @@ protocol P {
 struct S : P {
   typealias A = () -> ()
   func f(_: @Sendable () -> ()) -> Int { return 0 }
-  // expected-warning@-1 {{sendability of function types in instance method 'f' does not match requirement in protocol 'P'}}
+  // expected-warning@-1 {{sendability of function types in instance method 'f' does not match requirement in protocol 'P'; this is an error in the Swift 6 language mode}}
 }

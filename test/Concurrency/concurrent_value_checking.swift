@@ -45,7 +45,7 @@ actor A2 {
 
   nonisolated init(nonisoAsync value: NotConcurrent, _ c: Int) async {
     if c == 0 {
-      await self.init(valueAsync: value) // expected-warning {{passing 'value' to 'self'-isolated initializer 'init(valueAsync:)' risks causing data races}}
+      await self.init(valueAsync: value) // expected-warning {{passing 'value' to 'self'-isolated initializer 'init(valueAsync:)' risks causing data races; this is an error in the Swift 6 language mode}}
     } else {
       self.init(value: value)
     }
@@ -66,23 +66,23 @@ actor A2 {
 
 func testActorCreation(value: NotConcurrent) async {
   _ = A2(value: value)
-  // expected-warning @-1 {{sending 'value' risks causing data races}}
+  // expected-warning @-1 {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending task-isolated 'value' to actor-isolated initializer 'init(value:)' risks causing data races between actor-isolated and task-isolated uses}}
 
   _ = await A2(valueAsync: value)
-  // expected-warning @-1 {{sending 'value' risks causing data races}}
+  // expected-warning @-1 {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending task-isolated 'value' to actor-isolated initializer 'init(valueAsync:)' risks causing data races between actor-isolated and task-isolated uses}}
 
   _ = A2(delegatingSync: value)
-  // expected-warning @-1 {{sending 'value' risks causing data races}}
+  // expected-warning @-1 {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending task-isolated 'value' to actor-isolated initializer 'init(delegatingSync:)' risks causing data races between actor-isolated and task-isolated uses}}
 
   _ = await A2(delegatingAsync: value, 9)
-  // expected-warning @-1 {{sending 'value' risks causing data races}}
+  // expected-warning @-1 {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending task-isolated 'value' to actor-isolated initializer 'init(delegatingAsync:_:)' risks causing data races between actor-isolated and task-isolated uses}}
 
   _ = await A2(nonisoAsync: value, 3)
-  // expected-warning @-1 {{sending 'value' risks causing data races}}
+  // expected-warning @-1 {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending task-isolated 'value' to actor-isolated initializer 'init(nonisoAsync:_:)' risks causing data races between actor-isolated and task-isolated uses}}
 }
 
@@ -98,9 +98,9 @@ extension A1 {
     _ = await self.asynchronous(nil)
 
     // Across to a different actor, so Sendable restriction is enforced.
-    _ = other.localLet // expected-warning{{non-Sendable type 'NotConcurrent' of property 'localLet' cannot exit actor-isolated context}}
-    // expected-warning@-1 {{actor-isolated property 'localLet' cannot be accessed from outside of the actor}} {{9-9=await }}
-    _ = await other.synchronous() // expected-warning {{non-Sendable 'NotConcurrent?'-typed result can not be returned from actor-isolated instance method 'synchronous()' to actor-isolated context}}
+    _ = other.localLet // expected-warning{{non-Sendable type 'NotConcurrent' of property 'localLet' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
+    // expected-warning@-1 {{actor-isolated property 'localLet' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{9-9=await }}
+    _ = await other.synchronous() // expected-warning {{non-Sendable 'NotConcurrent?'-typed result can not be returned from actor-isolated instance method 'synchronous()' to actor-isolated context; this is an error in the Swift 6 language mode}}
     _ = await other.asynchronous(nil)
   }
 }
@@ -136,13 +136,13 @@ enum E {
 }
 
 func globalTest() async {
-  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated let 'globalValue' cannot be accessed from outside of the actor}} {{11-11=await }}
-  let a = globalValue // expected-warning{{non-Sendable type 'NotConcurrent?' of let 'globalValue' cannot exit global actor 'SomeGlobalActor'-isolated context}}
+  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated let 'globalValue' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{11-11=await }}
+  let a = globalValue // expected-warning{{non-Sendable type 'NotConcurrent?' of let 'globalValue' cannot exit global actor 'SomeGlobalActor'-isolated context; this is an error in the Swift 6 language mode}}
   await globalAsync(a)
   await globalSync(a)
 
-  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated static property 'notSafe' cannot be accessed from outside of the actor}} {{11-11=await }}
-  let _ = E.notSafe // expected-warning{{non-Sendable type 'NotConcurrent?' of static property 'notSafe' cannot exit global actor 'SomeGlobalActor'-isolated context}}
+  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated static property 'notSafe' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{11-11=await }}
+  let _ = E.notSafe // expected-warning{{non-Sendable type 'NotConcurrent?' of static property 'notSafe' cannot exit global actor 'SomeGlobalActor'-isolated context; this is an error in the Swift 6 language mode}}
 }
 
 struct HasSubscript {
@@ -161,15 +161,15 @@ class ClassWithGlobalActorInits { // expected-note 2{{class 'ClassWithGlobalActo
 
 @MainActor
 func globalTestMain(nc: NotConcurrent) async {
-  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated let 'globalValue' cannot be accessed from outside of the actor}} {{11-11=await }}
-  let a = globalValue // expected-warning {{non-Sendable type 'NotConcurrent?' of let 'globalValue' cannot exit global actor 'SomeGlobalActor'-isolated context}}
+  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated let 'globalValue' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{11-11=await }}
+  let a = globalValue // expected-warning {{non-Sendable type 'NotConcurrent?' of let 'globalValue' cannot exit global actor 'SomeGlobalActor'-isolated context; this is an error in the Swift 6 language mode}}
   await globalAsync(a)
   await globalSync(a)
   _ = await ClassWithGlobalActorInits(nc)
-  // expected-warning @-1 {{non-Sendable 'ClassWithGlobalActorInits'-typed result can not be returned from global actor 'SomeGlobalActor'-isolated initializer 'init(_:)' to main actor-isolated context}}
-  // expected-warning @-2 {{sending 'nc' risks causing data races}}
+  // expected-warning @-1 {{non-Sendable 'ClassWithGlobalActorInits'-typed result can not be returned from global actor 'SomeGlobalActor'-isolated initializer 'init(_:)' to main actor-isolated context; this is an error in the Swift 6 language mode}}
+  // expected-warning @-2 {{sending 'nc' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-3 {{sending main actor-isolated 'nc' to global actor 'SomeGlobalActor'-isolated initializer 'init(_:)' risks causing data races between global actor 'SomeGlobalActor'-isolated and main actor-isolated uses}}
-  _ = await ClassWithGlobalActorInits() // expected-warning {{non-Sendable 'ClassWithGlobalActorInits'-typed result can not be returned from global actor 'SomeGlobalActor'-isolated initializer 'init()' to main actor-isolated context}}
+  _ = await ClassWithGlobalActorInits() // expected-warning {{non-Sendable 'ClassWithGlobalActorInits'-typed result can not be returned from global actor 'SomeGlobalActor'-isolated initializer 'init()' to main actor-isolated context; this is an error in the Swift 6 language mode}}
 }
 
 @SomeGlobalActor
@@ -194,9 +194,9 @@ func testConcurrency() {
     print(y) // okay
   }
   acceptConcurrent {
-    print(x) // expected-warning{{capture of 'x' with non-Sendable type 'NotConcurrent' in a '@Sendable' closure}}
-    print(y) // expected-warning{{capture of 'y' with non-Sendable type 'NotConcurrent' in a '@Sendable' closure}}
-    // expected-warning@-1{{reference to captured var 'y' in concurrently-executing code}}
+    print(x) // expected-warning{{capture of 'x' with non-Sendable type 'NotConcurrent' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
+    print(y) // expected-warning{{capture of 'y' with non-Sendable type 'NotConcurrent' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
+    // expected-warning@-1{{reference to captured var 'y' in concurrently-executing code; this is an error in the Swift 6 language mode}}
   }
 }
 
@@ -231,7 +231,7 @@ class HasNC {
 }
 
 func testKeyPaths(dict: [NC: Int], nc: NC) {
-  _ = \HasNC.dict[nc] // expected-warning{{cannot form key path that captures non-Sendable type 'NC'}}
+  _ = \HasNC.dict[nc] // expected-warning{{cannot form key path that captures non-Sendable type 'NC'; this is an error in the Swift 6 language mode}}
 }
 
 // ----------------------------------------------------------------------
@@ -243,7 +243,7 @@ actor ANI {
 }
 
 func testANI(ani: ANI) async {
-  _ = ani.nc // expected-warning{{non-Sendable type 'NC' of property 'nc' cannot exit nonisolated context}}
+  _ = ani.nc // expected-warning{{non-Sendable type 'NC' of property 'nc' cannot exit nonisolated context; this is an error in the Swift 6 language mode}}
 }
 
 // ----------------------------------------------------------------------
@@ -254,7 +254,7 @@ protocol AsyncProto {
 }
 
 extension A1: AsyncProto {
-  func asyncMethod(_: NotConcurrent) async { } // expected-warning{{non-Sendable parameter type 'NotConcurrent' cannot be sent from caller of protocol requirement 'asyncMethod' into actor-isolated implementation}}
+  func asyncMethod(_: NotConcurrent) async { } // expected-warning{{non-Sendable parameter type 'NotConcurrent' cannot be sent from caller of protocol requirement 'asyncMethod' into actor-isolated implementation; this is an error in the Swift 6 language mode}}
 }
 
 protocol MainActorProto {
@@ -263,7 +263,7 @@ protocol MainActorProto {
 
 class SomeClass: MainActorProto {
   @SomeGlobalActor
-  func asyncMainMethod(_: NotConcurrent) async { } // expected-warning{{non-Sendable parameter type 'NotConcurrent' cannot be sent from caller of protocol requirement 'asyncMainMethod' into global actor 'SomeGlobalActor'-isolated implementation}}
+  func asyncMainMethod(_: NotConcurrent) async { } // expected-warning{{non-Sendable parameter type 'NotConcurrent' cannot be sent from caller of protocol requirement 'asyncMainMethod' into global actor 'SomeGlobalActor'-isolated implementation; this is an error in the Swift 6 language mode}}
 }
 
 // ----------------------------------------------------------------------
@@ -292,7 +292,7 @@ func acceptConcurrentUnary<T>(_: @Sendable (T) -> T) { }
 func concurrentClosures<T: SendableMetatype>(_: T) { // expected-note{{consider making generic parameter 'T' conform to the 'Sendable' protocol}} {{44-44= & Sendable}}
   acceptConcurrentUnary { (x: T) in
     _ = x // ok
-    acceptConcurrentUnary { _ in x } // expected-warning{{capture of 'x' with non-Sendable type 'T' in a '@Sendable' closure}}
+    acceptConcurrentUnary { _ in x } // expected-warning{{capture of 'x' with non-Sendable type 'T' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
     let y: T? = nil
     return y!
   }
@@ -302,11 +302,11 @@ func concurrentClosures<T: SendableMetatype>(_: T) { // expected-note{{consider 
 // Sendable checking
 // ----------------------------------------------------------------------
 struct S1: Sendable {
-  var nc: NotConcurrent // expected-warning{{stored property 'nc' of 'Sendable'-conforming struct 'S1' has non-Sendable type 'NotConcurrent'}}
+  var nc: NotConcurrent // expected-warning{{stored property 'nc' of 'Sendable'-conforming struct 'S1' has non-Sendable type 'NotConcurrent'; this is an error in the Swift 6 language mode}}
 }
 
 struct S2<T>: Sendable { // expected-note{{consider making generic parameter 'T' conform to the 'Sendable' protocol}} {{12-12=: Sendable}}
-  var nc: T // expected-warning{{stored property 'nc' of 'Sendable'-conforming generic struct 'S2' has non-Sendable type 'T'}}
+  var nc: T // expected-warning{{stored property 'nc' of 'Sendable'-conforming generic struct 'S2' has non-Sendable type 'T'; this is an error in the Swift 6 language mode}}
 }
 
 struct S3<T> {
@@ -317,7 +317,7 @@ struct S3<T> {
 extension S3: Sendable where T: Sendable { }
 
 enum E1: Sendable {
-  case payload(NotConcurrent) // expected-warning{{associated value 'payload' of 'Sendable'-conforming enum 'E1' has non-Sendable type 'NotConcurrent'}}
+  case payload(NotConcurrent) // expected-warning{{associated value 'payload' of 'Sendable'-conforming enum 'E1' has non-Sendable type 'NotConcurrent'; this is an error in the Swift 6 language mode}}
 }
 
 enum E2<T> {
@@ -327,8 +327,8 @@ enum E2<T> {
 extension E2: Sendable where T: Sendable { }
 
 final class C1: Sendable {
-  let nc: NotConcurrent? = nil // expected-warning{{stored property 'nc' of 'Sendable'-conforming class 'C1' contains non-Sendable type 'NotConcurrent'}}
-  var x: Int = 0 // expected-warning{{stored property 'x' of 'Sendable'-conforming class 'C1' is mutable}}
+  let nc: NotConcurrent? = nil // expected-warning{{stored property 'nc' of 'Sendable'-conforming class 'C1' contains non-Sendable type 'NotConcurrent'; this is an error in the Swift 6 language mode}}
+  var x: Int = 0 // expected-warning{{stored property 'x' of 'Sendable'-conforming class 'C1' is mutable; this is an error in the Swift 6 language mode}}
   let i: Int = 0
 }
 
@@ -381,13 +381,13 @@ struct SomeActor {
 class NotSendable {}
 
 // actor-isolated mutable properties are valid
-final class C10: Sendable { // expected-warning{{default initializer for 'C10' cannot be both nonisolated and main actor-isolated}}
+final class C10: Sendable { // expected-warning{{default initializer for 'C10' cannot be both nonisolated and main actor-isolated; this is an error in the Swift 6 language mode}}
   @MainActor var x = 0
   @MainActor var ns1 : NotSendable? // expected-note{{initializer for property 'ns1' is main actor-isolated}}
   @MainActor let ns : NotSendable? = nil
 }
 
-final class C14: Sendable { // expected-warning{{default initializer for 'C14' cannot be both nonisolated and global actor 'SomeActor'-isolated}}
+final class C14: Sendable { // expected-warning{{default initializer for 'C14' cannot be both nonisolated and global actor 'SomeActor'-isolated; this is an error in the Swift 6 language mode}}
   @SomeActor var y = 1
   @SomeActor var nc = NotConcurrent() // expected-note{{initializer for property 'nc' is global actor 'SomeActor'-isolated}}
   @SomeActor let nc1 = NotConcurrent()
@@ -397,19 +397,19 @@ extension NotConcurrent {
   func f() { }
 
   func test() {
-    Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       f() // expected-note {{closure captures 'self' which is accessible to code in the current task}}
     }
 
-    Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       self.f() // expected-note {{closure captures 'self' which is accessible to code in the current task}}
     }
 
-    Task { [self] in // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    Task { [self] in // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       f() // expected-note {{closure captures 'self' which is accessible to code in the current task}}
     }
 
-    Task { [self] in // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    Task { [self] in // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       self.f() // expected-note {{closure captures 'self' which is accessible to code in the current task}}
     }
   }
@@ -445,7 +445,7 @@ enum E12<T>: UnsafeSendable { // expected-warning{{'UnsafeSendable' is deprecate
 func testSendableOptionalInference(nc: NotConcurrent) {
   var fn: (@Sendable () -> Void)? = nil
   fn = {
-    print(nc) // expected-warning{{capture of 'nc' with non-Sendable type 'NotConcurrent' in a '@Sendable' closure}}
+    print(nc) // expected-warning{{capture of 'nc' with non-Sendable type 'NotConcurrent' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
   }
   _ = fn
 }

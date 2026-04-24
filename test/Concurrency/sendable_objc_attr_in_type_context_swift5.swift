@@ -203,7 +203,7 @@ protocol CompletionWithoutSendable {
 }
 
 extension DataHandler : CompletionWithoutSendable {
-  // expected-warning@-1 {{sendability of function types in class method 'sendData(completion:)' does not match requirement in protocol 'CompletionWithoutSendable'}}
+  // expected-warning@-1 {{sendability of function types in class method 'sendData(completion:)' does not match requirement in protocol 'CompletionWithoutSendable'; this is an error in the Swift 6 language mode}}
   // It should be possible to infer `T` from method that mismatches on @Sendable in Swift 5 mode
 }
 

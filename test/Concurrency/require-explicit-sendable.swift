@@ -71,8 +71,8 @@ extension S7: Sendable { }
 
 
 func testMe(s5: S5, s7: S7) {
-  acceptSendable(s5) // expected-warning{{conformance of 'S5' to 'Sendable' is unavailable}}
-  acceptSendable(s7) // expected-warning{{conformance of 'S7' to 'Sendable' is unavailable}}
+  acceptSendable(s5) // expected-warning{{conformance of 'S5' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+  acceptSendable(s7) // expected-warning{{conformance of 'S7' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
 }
 
 // expected-note@+3{{consider suppressing conformance to 'Sendable' protocol}} {{36-36=: ~Sendable}}
@@ -101,7 +101,7 @@ public struct S10 { // expected-warning{{public struct 'S10' does not specify wh
 }
 
 struct S11: Sendable {
-  var s7: S7 // expected-warning{{stored property 's7' of 'Sendable'-conforming struct 'S11' has non-Sendable type 'S7'}}
+  var s7: S7 // expected-warning{{stored property 's7' of 'Sendable'-conforming struct 'S11' has non-Sendable type 'S7'; this is an error in the Swift 6 language mode}}
 }
 
 @_nonSendable public struct S12 { }
@@ -115,7 +115,7 @@ open class TestThing {}
 open class TestSubThing : TestThing {}
 
 @available(SwiftStdlib 5.1, *)
-@MainActor(unsafe) // expected-warning {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+@MainActor(unsafe) // expected-warning {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
 open class TestThing2 {}
 
 @available(SwiftStdlib 5.1, *)

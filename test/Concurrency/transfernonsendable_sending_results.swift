@@ -121,7 +121,7 @@ func simpleTest() async {
 func simpleTest2() async {
   let x = NonSendableKlass()
   let y = transferResultWithArg(x)
-  await transferToMainDirect(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMainDirect(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMainDirect' risks causing data races between main actor-isolated and local nonisolated uses}}
   useValue(y)
   useValue(x) // expected-note {{access can happen concurrently}}
@@ -132,14 +132,14 @@ func simpleTest3() async {
   let x = NonSendableKlass()
   let y = transferResultWithArg(x)
   await transferToMainDirect(x)
-  await transferToMainDirect(y) // expected-warning {{sending 'y' risks causing data races}}
+  await transferToMainDirect(y) // expected-warning {{sending 'y' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'y' to main actor-isolated global function 'transferToMainDirect' risks causing data races between main actor-isolated and local nonisolated uses}}
   useValue(y) // expected-note {{access can happen concurrently}}
 }
 
 func transferResult() async -> sending NonSendableKlass {
   let x = NonSendableKlass()
-  await transferToMainDirect(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMainDirect(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMainDirect' risks causing data races between main actor-isolated and local nonisolated uses}}
   return x // expected-note {{access can happen concurrently}}
 }
@@ -150,14 +150,14 @@ func transferInAndOut(_ x: sending NonSendableKlass) -> sending NonSendableKlass
 
 
 func transferReturnArg(_ x: NonSendableKlass) -> sending NonSendableKlass {
-  return x // expected-warning {{sending 'x' risks causing data races}}
+  return x // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{task-isolated 'x' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
   // expected-ni-ns-note @-2 {{task-isolated 'x' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
 }
 
 // TODO: This will be fixed once I represent @MainActor on func types.
 @MainActor func transferReturnArgMainActor(_ x: NonSendableKlass) -> sending NonSendableKlass {
-  return x // expected-warning {{sending 'x' risks causing data races}}
+  return x // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{main actor-isolated 'x' cannot be a 'sending' result. main actor-isolated uses may race with caller uses}}
 }
 
@@ -178,7 +178,7 @@ func useTransferredResult() async {
 
 extension MainActorIsolatedStruct {
   func testNonSendableErrorReturnWithTransfer() -> sending NonSendableKlass {
-    return ns // expected-warning {{sending 'self.ns' risks causing data races}}
+    return ns // expected-warning {{sending 'self.ns' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{main actor-isolated 'self.ns' cannot be a 'sending' result. main actor-isolated uses may race with caller uses}}
   }
   func testNonSendableErrorReturnNoTransfer() -> NonSendableKlass {
@@ -194,7 +194,7 @@ extension MainActorIsolatedEnum {
     case .second(let ns):
       return ns
     }
-  } // expected-warning {{sending 'ns.some' risks causing data races}}
+  } // expected-warning {{sending 'ns.some' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{main actor-isolated 'ns.some' cannot be a 'sending' result. main actor-isolated uses may race with caller uses}}
 
   func testSwitchReturnNoTransfer() -> NonSendableKlass? {
@@ -211,7 +211,7 @@ extension MainActorIsolatedEnum {
       return ns // TODO: The error below should be here.
     }
     return nil
-  } // expected-warning {{sending 'ns.some' risks causing data races}}
+  } // expected-warning {{sending 'ns.some' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{main actor-isolated 'ns.some' cannot be a 'sending' result. main actor-isolated uses may race with caller uses}}
 
   func testIfLetReturnNoTransfer() -> NonSendableKlass? {
@@ -249,8 +249,8 @@ func asyncLetReabstractionThunkTest() async {
 func asyncLetReabstractionThunkTest2() async {
   // We emit the error here since we are returning a MainActor-isolated value.
   async let newValue: NonSendableKlass = await getMainActorValueAsync()
-  // expected-ni-warning @-1 {{non-Sendable 'NonSendableKlass'-typed result can not be returned from main actor-isolated global function 'getMainActorValueAsync()' to nonisolated context}}
-  // expected-ni-ns-warning @-2 {{non-Sendable 'NonSendableKlass'-typed result can not be returned from main actor-isolated global function 'getMainActorValueAsync()' to @concurrent context}}
+  // expected-ni-warning @-1 {{non-Sendable 'NonSendableKlass'-typed result can not be returned from main actor-isolated global function 'getMainActorValueAsync()' to nonisolated context; this is an error in the Swift 6 language mode}}
+  // expected-ni-ns-warning @-2 {{non-Sendable 'NonSendableKlass'-typed result can not be returned from main actor-isolated global function 'getMainActorValueAsync()' to @concurrent context; this is an error in the Swift 6 language mode}}
 
   let _ = await newValue
 
@@ -273,8 +273,8 @@ func asyncLetReabstractionThunkTest2() async {
 @MainActor func asyncLetReabstractionThunkTestGlobalActor2() async {
   // We emit the error here since we are returning a MainActor-isolated value.
   async let newValue: NonSendableKlass = await getMainActorValueAsync()
-  // expected-ni-warning @-1 {{non-Sendable 'NonSendableKlass'-typed result can not be returned from main actor-isolated global function 'getMainActorValueAsync()' to nonisolated context}}
-  // expected-ni-ns-warning @-2 {{non-Sendable 'NonSendableKlass'-typed result can not be returned from main actor-isolated global function 'getMainActorValueAsync()' to @concurrent context}}
+  // expected-ni-warning @-1 {{non-Sendable 'NonSendableKlass'-typed result can not be returned from main actor-isolated global function 'getMainActorValueAsync()' to nonisolated context; this is an error in the Swift 6 language mode}}
+  // expected-ni-ns-warning @-2 {{non-Sendable 'NonSendableKlass'-typed result can not be returned from main actor-isolated global function 'getMainActorValueAsync()' to @concurrent context; this is an error in the Swift 6 language mode}}
 
   let _ = await newValue
 
@@ -288,27 +288,27 @@ func asyncLetReabstractionThunkTest2() async {
 ///////////////////////////////////
 
 func indirectSending<T>(_ t: T) -> sending T {
-  return t // expected-warning {{returning task-isolated 't' as a 'sending' result risks causing data races}}
+  return t // expected-warning {{returning task-isolated 't' as a 'sending' result risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning task-isolated 't' risks causing data races since the caller assumes that 't' can be safely sent to other isolation domains}}
 }
 
 func indirectSendingStructField<T>(_ t: GenericNonSendableStruct<T>) -> sending T {
-  return t.t // expected-warning {{returning task-isolated 't.t' as a 'sending' result risks causing data races}}
+  return t.t // expected-warning {{returning task-isolated 't.t' as a 'sending' result risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning task-isolated 't.t' risks causing data races since the caller assumes that 't.t' can be safely sent to other isolation domains}}
 }
 
 func indirectSendingStructOptionalField<T>(_ t: GenericNonSendableStruct<T>) -> sending T {
-  return t.t2! // expected-warning {{returning task-isolated 't.t2.some' as a 'sending' result risks causing data races}}
+  return t.t2! // expected-warning {{returning task-isolated 't.t2.some' as a 'sending' result risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning task-isolated 't.t2.some' risks causing data races since the caller assumes that 't.t2.some' can be safely sent to other isolation domains}}
 }
 
 func indirectSendingClassField<T>(_ t: GenericNonSendableKlass<T>) -> sending T {
-  return t.t // expected-warning {{returning task-isolated 't.t' as a 'sending' result risks causing data races}}
+  return t.t // expected-warning {{returning task-isolated 't.t' as a 'sending' result risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning task-isolated 't.t' risks causing data races since the caller assumes that 't.t' can be safely sent to other isolation domains}}
 }
 
 func indirectSendingOptionalClassField<T>(_ t: GenericNonSendableKlass<T>) -> sending T {
-  return t.t2! // expected-warning {{returning a task-isolated 'Optional<T>' value as a 'sending' result risks causing data races}}
+  return t.t2! // expected-warning {{returning a task-isolated 'Optional<T>' value as a 'sending' result risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning a task-isolated 'Optional<T>' value risks causing races since the caller assumes the value can be safely sent to other isolation domains}}
   // expected-note @-2 {{'Optional<T>' is a non-Sendable type}}
 }
@@ -350,7 +350,7 @@ func test_opaque_sending_result_async() async {
 func test_opaque_sending_result_main_actor() async {
   let x: some OpaqueP = await opaqueSendingResultAsync()
   sendParameter(x)
-  // expected-warning @-1 {{sending 'x' risks causing data races}}
+  // expected-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{'x' used after being passed as a 'sending' parameter; Later uses could race}}
   useValueOpaque(x)
   // expected-note @-1 {{access can happen concurrently}}

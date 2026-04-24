@@ -9,10 +9,10 @@ actor SomeGlobalActor {
   static let shared = SomeGlobalActor()
 }
 
-// expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+// expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
 @MainActor(unsafe) func globalMain() { } // expected-note {{calls to global function 'globalMain()' from outside of its actor context are implicitly asynchronous}}
 
-// expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+// expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
 @SomeGlobalActor(unsafe) func globalSome() { } // expected-note 2{{calls to global function 'globalSome()' from outside of its actor context are implicitly asynchronous}}
 // expected-complete-note @-1 {{calls to global function 'globalSome()' from outside of its actor context are implicitly asynchronous}}
 
@@ -20,7 +20,7 @@ actor SomeGlobalActor {
 // Witnessing and unsafe global actor
 // ----------------------------------------------------------------------
 protocol P1 {
-  // expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+  // expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
   @MainActor(unsafe) func onMainActor()
 }
 
@@ -36,7 +36,7 @@ struct S3_P1: P1 {
   nonisolated func onMainActor() { }
 }
 
-// expected-warning@+1{{conformance of 'S4_P1_not_quietly' to protocol 'P1' involves isolation mismatches and can cause data races}}
+// expected-warning@+1{{conformance of 'S4_P1_not_quietly' to protocol 'P1' involves isolation mismatches and can cause data races; this is an error in the Swift 6 language mode}}
 struct S4_P1_not_quietly: P1 {
   // expected-note@-1{{turn data races into runtime errors with '@preconcurrency'}}
 
@@ -44,7 +44,7 @@ struct S4_P1_not_quietly: P1 {
   // expected-note @-1 {{global actor 'SomeGlobalActor'-isolated instance method 'onMainActor()' cannot satisfy main actor-isolated requirement}}
 }
 
-// expected-warning@+2{{conformance of 'S4_P1' to protocol 'P1' involves isolation mismatches and can cause data races}}
+// expected-warning@+2{{conformance of 'S4_P1' to protocol 'P1' involves isolation mismatches and can cause data races; this is an error in the Swift 6 language mode}}
 @SomeGlobalActor
 struct S4_P1: P1 {
   // expected-note@-1{{turn data races into runtime errors with '@preconcurrency'}}
@@ -52,7 +52,7 @@ struct S4_P1: P1 {
   @SomeGlobalActor func onMainActor() { } // expected-note{{global actor 'SomeGlobalActor'-isolated instance method 'onMainActor()' cannot satisfy main actor-isolated requirement}}
 }
 
-// expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+// expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
 @MainActor(unsafe)
 protocol P2 {
   func f() // expected-note{{calls to instance method 'f()' from outside of its actor context are implicitly asynchronous}}
@@ -89,7 +89,7 @@ func testP2_noconcurrency(x: S5_P2, p2: P2) {
 // Overriding and unsafe global actor
 // ----------------------------------------------------------------------
 class C1 {
-  // expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+  // expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
   @MainActor(unsafe) func method() { } // expected-note{{overridden declaration is here}}
 }
 
@@ -124,14 +124,14 @@ class C6: C2 {
 }
 
 class C7: C2 {
-  // expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+  // expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
   @SomeGlobalActor(unsafe) override func method() { // expected-error{{global actor 'SomeGlobalActor'-isolated instance method 'method()' has different actor isolation from main actor-isolated overridden declaration}}
     globalMain() // expected-warning{{call to main actor-isolated global function 'globalMain()' in a synchronous global actor 'SomeGlobalActor'-isolated context}}
     globalSome() // okay
   }
 }
 
-// expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+// expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
 @MainActor(unsafe) // expected-note {{'GloballyIsolatedProto' is isolated to global actor 'MainActor' here}}
 protocol GloballyIsolatedProto {
 }

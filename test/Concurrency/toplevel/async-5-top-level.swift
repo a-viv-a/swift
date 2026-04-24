@@ -22,7 +22,7 @@ func nonIsolatedAsync() async {
     await print(a)
     a = a + 10
     // expected-warning@-1:5 {{main actor-isolated var 'a' can not be mutated from a nonisolated context}}
-    // expected-warning@-2:9 {{main actor-isolated var 'a' cannot be accessed from outside of the actor}}{{9-9=await }}
+    // expected-warning@-2:9 {{main actor-isolated var 'a' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}}{{9-9=await }}
     // expected-note@-3 {{consider declaring an isolated method on 'MainActor' to perform the mutation}}
 }
 

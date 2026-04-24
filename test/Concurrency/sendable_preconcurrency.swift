@@ -23,7 +23,7 @@ struct MyType {
 
 struct MyType2: Sendable {
   var nsc: NonStrictClass // no warning; @preconcurrency suppressed it
-  var ns: NS // expected-warning{{stored property 'ns' of 'Sendable'-conforming struct 'MyType2' has non-Sendable type 'NS'}}
+  var ns: NS // expected-warning{{stored property 'ns' of 'Sendable'-conforming struct 'MyType2' has non-Sendable type 'NS'; this is an error in the Swift 6 language mode}}
 }
 
 struct MyType3 {
@@ -31,7 +31,7 @@ struct MyType3 {
 }
 
 func testA(ns: NS, mt: MyType, mt2: MyType2, mt3: MyType3, sc: StrictClass, nsc: NonStrictClass) async {
-  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+  Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(ns) // expected-tns-note {{closure captures 'ns' which is accessible to code in the current task}}
     print(mt)
     print(mt2)
@@ -45,12 +45,12 @@ extension NonStrictStruct: @retroactive @unchecked Swift.Sendable { }
 
 class StrictSubclass: StrictClass {
   override func send(_ body: () -> ()) {}
-  override func dontSend(_ body: @Sendable () -> ()) {} // expected-warning {{declaration 'dontSend' has a type with different sendability from any potential overrides}}
+  override func dontSend(_ body: @Sendable () -> ()) {} // expected-warning {{declaration 'dontSend' has a type with different sendability from any potential overrides; this is an error in the Swift 6 language mode}}
 }
 
 struct StrictConformer: StrictProtocol {
   func send(_ body: () -> Void) {}
-  func dontSend(_ body: @Sendable () -> Void) {} // expected-warning {{sendability of function types in instance method 'dontSend' does not match requirement in protocol 'StrictProtocol'}}
+  func dontSend(_ body: @Sendable () -> Void) {} // expected-warning {{sendability of function types in instance method 'dontSend' does not match requirement in protocol 'StrictProtocol'; this is an error in the Swift 6 language mode}}
 }
 
 class NonStrictSubclass: NonStrictClass {

@@ -163,7 +163,7 @@ let helloworld:  @Sendable () -> Void = World.greet
 class NonSendableC { // expected-note{{class 'NonSendableC' does not conform to the 'Sendable' protocol}}
     var x: Int = 0
 
-    @Sendable func inc() { // expected-warning {{instance method of non-Sendable type 'NonSendableC' cannot be marked as '@Sendable'}}
+    @Sendable func inc() { // expected-warning {{instance method of non-Sendable type 'NonSendableC' cannot be marked as '@Sendable'; this is an error in the Swift 6 language mode}}
         x += 1
     }
 }

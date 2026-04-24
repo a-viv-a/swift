@@ -107,7 +107,7 @@ struct MainActorStructWithMixedFieldsAllVar {
 
     trigger() // expected-note {{after this use of 'self', only main actor-isolated properties of 'self' can be accessed from this init}}
 
-    self = .init(v1: ()) // expected-warning {{cannot access 'self' here in main actor-isolated initializer}}
+    self = .init(v1: ()) // expected-warning {{cannot access 'self' here in main actor-isolated initializer; this is an error in the Swift 6 language mode; this is an error in the Swift 6 language mode}}
   }
 
   @MainActor init(v3: Void) {
@@ -115,7 +115,7 @@ struct MainActorStructWithMixedFieldsAllVar {
 
     trigger() // expected-note {{after this use of 'self', only main actor-isolated properties of 'self' can be accessed from this init}}
 
-    self = .init(v1: ()) // expected-warning {{cannot access 'self' here in main actor-isolated initializer}}
+    self = .init(v1: ()) // expected-warning {{cannot access 'self' here in main actor-isolated initializer; this is an error in the Swift 6 language mode; this is an error in the Swift 6 language mode}}
   }
 
   @MainActor init(v4: Void) {
@@ -123,7 +123,7 @@ struct MainActorStructWithMixedFieldsAllVar {
 
     trigger() // expected-note {{after this use of 'self', only main actor-isolated properties of 'self' can be accessed from this init}}
 
-    self = .init(v2: ()) // expected-warning {{cannot access 'self' here in main actor-isolated initializer}}
+    self = .init(v2: ()) // expected-warning {{cannot access 'self' here in main actor-isolated initializer; this is an error in the Swift 6 language mode; this is an error in the Swift 6 language mode}}
   }
 }
 

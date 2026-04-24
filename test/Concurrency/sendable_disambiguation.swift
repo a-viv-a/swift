@@ -17,7 +17,7 @@ do {
   func testNonSendable<T>(v: T) { // expected-note {{consider making generic parameter 'T' conform to the 'Sendable' protocol}}
     _ = Test(value: v) // Ok (non-Sendable overload)
     _ = SendableOnly(value: v)
-    // expected-warning@-1 {{type 'T' does not conform to the 'Sendable' protocol}}
+    // expected-warning@-1 {{type 'T' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   }
 
   func testSendable<T: Sendable>(v: T) {

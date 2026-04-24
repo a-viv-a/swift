@@ -60,8 +60,8 @@ do {
   let nonSendableKP = \K.[NonSendable()]
 
   let _: KeyPath<K, Bool> = \.[NonSendable()] // ok
-  let _: KeyPath<K, Bool> & Sendable = \.[NonSendable()] // expected-warning {{type 'KeyPath<K, Bool>' does not conform to the 'Sendable' protocol}}
-  let _: KeyPath<K, Int> & Sendable = \.[42, NonSendable(data: [-1, 0, 1])] // expected-warning {{type 'KeyPath<K, Int>' does not conform to the 'Sendable' protocol}}
+  let _: KeyPath<K, Bool> & Sendable = \.[NonSendable()] // expected-warning {{type 'KeyPath<K, Bool>' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
+  let _: KeyPath<K, Int> & Sendable = \.[42, NonSendable(data: [-1, 0, 1])] // expected-warning {{type 'KeyPath<K, Int>' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   let _: KeyPath<K, Int> & Sendable = \.[42, -1] // Ok
 
   test(nonSendableKP) // expected-warning {{type 'KeyPath<K, Bool>' does not conform to the 'Sendable' protocol}}
@@ -106,7 +106,7 @@ do {
   // expected-warning@-1 {{converting non-Sendable function value to '@Sendable (V) -> Int' may introduce data races}}
 
   let _: KeyPath<V, Int> & Sendable = \.[42, CondSendable(NonSendable(data: [1, 2, 3]))]
-  // expected-warning@-1 {{type 'KeyPath<V, Int>' does not conform to the 'Sendable' protocol}}
+  // expected-warning@-1 {{type 'KeyPath<V, Int>' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   let _: KeyPath<V, Int> & Sendable = \.[42, CondSendable(42)] // Ok
 
   struct Root {
@@ -153,9 +153,9 @@ func testGlobalActorIsolatedReferences() {
   // expected-warning@-1 {{cannot form key path to main actor-isolated subscript 'subscript(_:)'; this is an error in the Swift 6 language mode}}
 
   let _: KeyPath<Isolated, Int> & Sendable = dataKP
-  // expected-warning@-1 {{type 'WritableKeyPath<Isolated, Int>' does not conform to the 'Sendable' protocol}}
+  // expected-warning@-1 {{type 'WritableKeyPath<Isolated, Int>' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   let _: KeyPath<Isolated, Bool> & Sendable = subscriptKP
-  // expected-warning@-1 {{type 'KeyPath<Isolated, Bool>' does not conform to the 'Sendable' protocol}}
+  // expected-warning@-1 {{type 'KeyPath<Isolated, Bool>' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 
   func testNonIsolated() {
     _ = \Isolated.data // Ok

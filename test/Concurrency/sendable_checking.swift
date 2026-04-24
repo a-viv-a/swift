@@ -42,18 +42,18 @@ func testCV(
   fn: @escaping () -> Void
   // expected-note @-1 {{parameter 'fn' is implicitly non-Sendable}}
 ) {
-  acceptCV(ns1) // expected-warning {{conformance of 'NS1' to 'Sendable' is unavailable}}
+  acceptCV(ns1) // expected-warning {{conformance of 'NS1' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
 
-  acceptCV(ns1array) // expected-warning {{conformance of 'NS1' to 'Sendable' is unavailable}}
+  acceptCV(ns1array) // expected-warning {{conformance of 'NS1' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
 
-  acceptCV(ns2) // expected-tns-warning {{type 'NS2' does not conform to the 'Sendable' protocol}}
+  acceptCV(ns2) // expected-tns-warning {{type 'NS2' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 
   acceptCV(ns3) // expected-warning {{conformance of 'NS3' to 'Sendable' is only available in macOS 11.0 or newer}}
   // expected-note @-1 {{add 'if #available' version check}}
 
-  acceptCV(ns4) // expected-tns-warning {{type 'NS4' does not conform to the 'Sendable' protocol}}
+  acceptCV(ns4) // expected-tns-warning {{type 'NS4' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 
-  acceptCV(fn) // expected-tns-warning {{type '() -> Void' does not conform to the 'Sendable' protocol}}
+  acceptCV(fn) // expected-tns-warning {{type '() -> Void' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   // expected-tns-note @-1 {{a function type must be marked '@Sendable' to conform to 'Sendable'}}
 
   acceptSendableFn(fn) // expected-warning{{passing non-Sendable parameter 'fn' to function expecting a '@Sendable' closure}}
@@ -65,13 +65,13 @@ func testCV(
   fn: @escaping () -> Void
   // expected-note@-1{{parameter 'fn' is implicitly non-Sendable}}
 ) async {
-  acceptCV(ns1) // expected-warning{{conformance of 'NS1' to 'Sendable' is unavailable}}
-  acceptCV(ns1array) // expected-warning{{conformance of 'NS1' to 'Sendable' is unavailable}}
-  acceptCV(ns2) // expected-warning{{type 'NS2' does not conform to the 'Sendable' protocol}}
+  acceptCV(ns1) // expected-warning{{conformance of 'NS1' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+  acceptCV(ns1array) // expected-warning{{conformance of 'NS1' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+  acceptCV(ns2) // expected-warning{{type 'NS2' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   acceptCV(ns3) // expected-warning{{conformance of 'NS3' to 'Sendable' is only available in macOS 11.0 or newer}}
   // expected-note@-1{{add 'if #available' version check}}
-  acceptCV(ns4) // expected-warning{{type 'NS4' does not conform to the 'Sendable' protocol}}
-  acceptCV(fn) // expected-warning{{type '() -> Void' does not conform to the 'Sendable' protocol}}
+  acceptCV(ns4) // expected-warning{{type 'NS4' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
+  acceptCV(fn) // expected-warning{{type '() -> Void' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
   // expected-note@-1{{a function type must be marked '@Sendable' to conform to 'Sendable'}}
   acceptSendableFn(fn) // expected-warning{{passing non-Sendable parameter 'fn' to function expecting a '@Sendable' closure}}
 }
@@ -95,7 +95,7 @@ public actor MyActor: MyProto {
 
   func g(ns1: NS1) async {
     await nonisolatedAsyncFunc1(ns1)
-    // expected-tns-ni-warning @-1 {{sending 'ns1' risks causing data races}}
+    // expected-tns-ni-warning @-1 {{sending 'ns1' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-tns-ni-note @-2 {{sending 'self'-isolated 'ns1' to nonisolated global function 'nonisolatedAsyncFunc1' risks causing data races between nonisolated and 'self'-isolated uses}}
     _ = await nonisolatedAsyncFunc2()
   }
@@ -146,15 +146,15 @@ protocol P {
   func foo(x : () -> ()) -> () {}
 
   func bar(x : () -> ()) -> () {}
-  // expected-warning@-1 {{non-Sendable parameter type '() -> ()' cannot be sent from caller of protocol requirement 'bar(x:)' into actor-isolated implementation}}
+  // expected-warning@-1 {{non-Sendable parameter type '() -> ()' cannot be sent from caller of protocol requirement 'bar(x:)' into actor-isolated implementation; this is an error in the Swift 6 language mode}}
 
   func foo2<T>(x : T) -> () {}
 
   func bar2<T>(x : T) -> () {}
-  // expected-warning@-1 {{non-Sendable parameter type 'T' cannot be sent from caller of protocol requirement 'bar2(x:)' into actor-isolated implementation}}
+  // expected-warning@-1 {{non-Sendable parameter type 'T' cannot be sent from caller of protocol requirement 'bar2(x:)' into actor-isolated implementation; this is an error in the Swift 6 language mode}}
 
   func bar3<T: Equatable>(x : T) -> () {}
-  // expected-warning@-1 {{non-Sendable parameter type 'T' cannot be sent from caller of protocol requirement 'bar3(x:)' into actor-isolated implementation}}
+  // expected-warning@-1 {{non-Sendable parameter type 'T' cannot be sent from caller of protocol requirement 'bar3(x:)' into actor-isolated implementation; this is an error in the Swift 6 language mode}}
 }
 
 @available(SwiftStdlib 5.1, *)
@@ -190,19 +190,19 @@ class Sub : Super {
   // case of that being disabled, we cannot do this since we will hop off the
   // actor.
   override nonisolated func bar(x : () -> ()) async {}
-  // expected-targeted-and-ni-warning@-1 {{non-Sendable parameter type '() -> ()' cannot be sent from caller of superclass instance method 'bar(x:)' into nonisolated override}}
+  // expected-targeted-and-ni-warning@-1 {{non-Sendable parameter type '() -> ()' cannot be sent from caller of superclass instance method 'bar(x:)' into nonisolated override; this is an error in the Swift 6 language mode}}
 
   override nonisolated func foo2<T>(x: T) async {}
 
   // See comment above about why nonisolated overrides of superclass are allowed
   // when is enabled NonisolatedNonsendingByDefault.
   override nonisolated func bar2<T>(x: T) async {}
-  // expected-targeted-and-ni-warning @-1 {{non-Sendable parameter type 'T' cannot be sent from caller of superclass instance method 'bar2(x:)' into nonisolated override}}
+  // expected-targeted-and-ni-warning @-1 {{non-Sendable parameter type 'T' cannot be sent from caller of superclass instance method 'bar2(x:)' into nonisolated override; this is an error in the Swift 6 language mode}}
 
   // See comment above about why nonisolated overrides of superclass are allowed
   // when is enabled NonisolatedNonsendingByDefault.
   override nonisolated func bar3<T>(x: T) async {}
-  // expected-targeted-and-ni-warning @-1 {{non-Sendable parameter type 'T' cannot be sent from caller of superclass instance method 'bar3(x:)' into nonisolated override}}
+  // expected-targeted-and-ni-warning @-1 {{non-Sendable parameter type 'T' cannot be sent from caller of superclass instance method 'bar3(x:)' into nonisolated override; this is an error in the Swift 6 language mode}}
 }
 
 @available(SwiftStdlib 5.1, *)
@@ -245,8 +245,8 @@ class SubWUnsafeSubscript : SuperWUnsafeSubscript {
   // actor.
   override nonisolated subscript<T>(x : T) -> Int {
     get async {
-      // expected-targeted-and-ni-warning@-2{{non-Sendable parameter type 'T' cannot be sent from caller of superclass subscript 'subscript(_:)' into nonisolated override}}
-      // expected-targeted-and-ni-warning@-2{{non-Sendable parameter type 'T' cannot be sent from caller of superclass getter for subscript 'subscript(_:)' into nonisolated override}}
+      // expected-targeted-and-ni-warning@-2{{non-Sendable parameter type 'T' cannot be sent from caller of superclass subscript 'subscript(_:)' into nonisolated override; this is an error in the Swift 6 language mode}}
+      // expected-targeted-and-ni-warning@-2{{non-Sendable parameter type 'T' cannot be sent from caller of superclass getter for subscript 'subscript(_:)' into nonisolated override; this is an error in the Swift 6 language mode}}
       // there really shouldn't be two warnings produced here, see rdar://110846040 (Sendable diagnostics reported twice for subscript getters)
       return 0
     }
@@ -290,18 +290,18 @@ final class NonSendable {
 
   func call() async {
     await update()
-    // expected-tns-warning @-1 {{sending 'self' risks causing data races}}
+    // expected-tns-warning @-1 {{sending 'self' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-tns-note @-2 {{sending task-isolated 'self' to main actor-isolated instance method 'update()' risks causing data races between main actor-isolated and task-isolated uses}}
 
     await self.update()
-    // expected-tns-warning @-1 {{sending 'self' risks causing data races}}
+    // expected-tns-warning @-1 {{sending 'self' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-tns-note @-2 {{sending task-isolated 'self' to main actor-isolated instance method 'update()' risks causing data races between main actor-isolated and task-isolated uses}}
 
-    _ = await x // expected-tns-warning {{passing 'self' to main actor-isolated getter for property 'x' risks causing data races}}
-    // expected-warning@-1 {{non-Sendable type 'NonSendable' cannot be sent into main actor-isolated context in call to property 'x'}}
+    _ = await x // expected-tns-warning {{passing 'self' to main actor-isolated getter for property 'x' risks causing data races; this is an error in the Swift 6 language mode}}
+    // expected-warning@-1 {{non-Sendable type 'NonSendable' cannot be sent into main actor-isolated context in call to property 'x'; this is an error in the Swift 6 language mode}}
 
-    _ = await self.x // expected-tns-warning {{passing 'self' to main actor-isolated getter for property 'x' risks causing data races}}
-      // expected-warning@-1 {{non-Sendable type 'NonSendable' cannot be sent into main actor-isolated context in call to property 'x'}}
+    _ = await self.x // expected-tns-warning {{passing 'self' to main actor-isolated getter for property 'x' risks causing data races; this is an error in the Swift 6 language mode}}
+      // expected-warning@-1 {{non-Sendable type 'NonSendable' cannot be sent into main actor-isolated context in call to property 'x'; this is an error in the Swift 6 language mode}}
   }
 
   @MainActor
@@ -319,11 +319,11 @@ final class NonSendable {
 func testNonSendableBaseArg() async {
   let t = NonSendable()
   await t.update()
-  // expected-tns-warning @-1 {{sending 't' risks causing data races}}
+  // expected-tns-warning @-1 {{sending 't' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-tns-note @-2 {{sending 't' to main actor-isolated instance method 'update()' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = await t.x
-  // expected-warning @-1 {{non-Sendable type 'NonSendable' cannot be sent into main actor-isolated context in call to property 'x'}}
+  // expected-warning @-1 {{non-Sendable type 'NonSendable' cannot be sent into main actor-isolated context in call to property 'x'; this is an error in the Swift 6 language mode}}
   // expected-tns-note @-2 {{access can happen concurrently}}
 }
 
@@ -332,13 +332,13 @@ func testNonSendableBaseArg() async {
 func testNonSendableBaseArg2() async {
   let t = NonSendable()
   await t.update()
-  // expected-tns-warning @-1 {{sending 't' risks causing data races}}
+  // expected-tns-warning @-1 {{sending 't' risks causing data races; this is an error in the Swift 6 language mode}}
   // TODO: Improve the diagnostic so that we say custom actor isolated instead since t.y
   // is custom actor isolated.
   // expected-tns-note @-4 {{sending 't' to main actor-isolated instance method 'update()' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = await t.y
-  // expected-warning @-1 {{non-Sendable type 'NonSendable' cannot be sent into global actor 'CustomActor'-isolated context in call to property 'y'}}
+  // expected-warning @-1 {{non-Sendable type 'NonSendable' cannot be sent into global actor 'CustomActor'-isolated context in call to property 'y'; this is an error in the Swift 6 language mode}}
   // expected-tns-note @-2 {{access can happen concurrently}}
 }
 
@@ -347,7 +347,7 @@ func testNonSendableBaseArg2() async {
 func testNonSendableBaseArg3() async {
   let t = NonSendable()
   await t.update()
-  // expected-tns-warning @-1 {{sending 't' risks causing data races}}
+  // expected-tns-warning @-1 {{sending 't' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-tns-note @-2 {{sending 't' to main actor-isolated instance method 'update()' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = t.z
@@ -366,12 +366,12 @@ func callNonisolatedAsyncClosure(
   g: (NonSendable) async -> Void
 ) async {
   await g(ns)
-  // expected-tns-ni-warning @-1 {{sending 'ns' risks causing data races}}
+  // expected-tns-ni-warning @-1 {{sending 'ns' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-tns-ni-note @-2 {{sending main actor-isolated 'ns' to nonisolated callee risks causing data races between nonisolated and main actor-isolated uses}}
 
   let f: (NonSendable) async -> () = globalSendable // okay
   await f(ns)
-  // expected-tns-ni-warning @-1 {{sending 'ns' risks causing data races}}
+  // expected-tns-ni-warning @-1 {{sending 'ns' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-tns-ni-note @-2 {{sending main actor-isolated 'ns' to nonisolated callee risks causing data races between nonisolated and main actor-isolated uses}}
 }
 #endif
@@ -383,7 +383,7 @@ func testLocalCaptures() {
   @Sendable
   func a2() -> NonSendable {
     return ns
-    // expected-tns-warning @-1 {{capture of 'ns' with non-Sendable type 'NonSendable' in a '@Sendable' local function}}
+    // expected-tns-warning @-1 {{capture of 'ns' with non-Sendable type 'NonSendable' in a '@Sendable' local function; this is an error in the Swift 6 language mode}}
   }
 }
 
@@ -392,37 +392,37 @@ func testPointersAreNotSendable() {
 
   func testUnsafePointer(ptr: UnsafePointer<Int>,
                          mutablePtr: UnsafeMutablePointer<String>) {
-    testSendable(ptr) // expected-warning {{conformance of 'UnsafePointer<Pointee>' to 'Sendable' is unavailable}}
-    testSendable(mutablePtr) // expected-warning {{conformance of 'UnsafeMutablePointer<Pointee>' to 'Sendable' is unavailable}}
+    testSendable(ptr) // expected-warning {{conformance of 'UnsafePointer<Pointee>' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(mutablePtr) // expected-warning {{conformance of 'UnsafeMutablePointer<Pointee>' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
   }
 
   func testRawPointer(ptr: UnsafeRawPointer,
                             mutablePtr: UnsafeMutableRawPointer) {
-    testSendable(ptr) // expected-warning {{conformance of 'UnsafeRawPointer' to 'Sendable' is unavailable}}
-    testSendable(mutablePtr) // expected-warning {{conformance of 'UnsafeMutableRawPointer' to 'Sendable' is unavailable}}
+    testSendable(ptr) // expected-warning {{conformance of 'UnsafeRawPointer' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(mutablePtr) // expected-warning {{conformance of 'UnsafeMutableRawPointer' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
   }
 
   func testOpaqueAndCPointers(opaquePtr: OpaquePointer, cPtr: CVaListPointer, autoReleasePtr: AutoreleasingUnsafeMutablePointer<Int>) {
-    testSendable(opaquePtr) // expected-warning {{conformance of 'OpaquePointer' to 'Sendable' is unavailable}}
-    testSendable(cPtr) // expected-warning {{conformance of 'CVaListPointer' to 'Sendable' is unavailable}}
-    testSendable(autoReleasePtr) // expected-warning {{conformance of 'AutoreleasingUnsafeMutablePointer<Pointee>' to 'Sendable' is unavailable}}
+    testSendable(opaquePtr) // expected-warning {{conformance of 'OpaquePointer' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(cPtr) // expected-warning {{conformance of 'CVaListPointer' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(autoReleasePtr) // expected-warning {{conformance of 'AutoreleasingUnsafeMutablePointer<Pointee>' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
   }
 
   func testBufferPointers(buffer: UnsafeBufferPointer<Int>, mutableBuffer: UnsafeMutableBufferPointer<Int>,
                           rawBuffer: UnsafeRawBufferPointer, rawMutableBuffer: UnsafeMutableRawBufferPointer) {
-    testSendable(buffer) // expected-warning {{conformance of 'UnsafeBufferPointer<Element>' to 'Sendable' is unavailable}}
-    testSendable(mutableBuffer) // expected-warning {{conformance of 'UnsafeMutableBufferPointer<Element>' to 'Sendable' is unavailable}}
-    testSendable(buffer.makeIterator()) // expected-warning {{conformance of 'UnsafeBufferPointer<Element>.Iterator' to 'Sendable' is unavailable}}
-    testSendable(rawBuffer) // expected-warning {{conformance of 'UnsafeRawBufferPointer' to 'Sendable' is unavailable}}
-    testSendable(rawBuffer.makeIterator()) // expected-warning {{conformance of 'UnsafeRawBufferPointer.Iterator' to 'Sendable' is unavailable}}
-    testSendable(rawMutableBuffer) // expected-warning {{conformance of 'UnsafeMutableRawBufferPointer' to 'Sendable' is unavailable}}
-    testSendable(rawMutableBuffer.makeIterator()) // expected-warning {{conformance of 'UnsafeRawBufferPointer.Iterator' to 'Sendable' is unavailable}}
+    testSendable(buffer) // expected-warning {{conformance of 'UnsafeBufferPointer<Element>' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(mutableBuffer) // expected-warning {{conformance of 'UnsafeMutableBufferPointer<Element>' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(buffer.makeIterator()) // expected-warning {{conformance of 'UnsafeBufferPointer<Element>.Iterator' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(rawBuffer) // expected-warning {{conformance of 'UnsafeRawBufferPointer' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(rawBuffer.makeIterator()) // expected-warning {{conformance of 'UnsafeRawBufferPointer.Iterator' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(rawMutableBuffer) // expected-warning {{conformance of 'UnsafeMutableRawBufferPointer' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
+    testSendable(rawMutableBuffer.makeIterator()) // expected-warning {{conformance of 'UnsafeRawBufferPointer.Iterator' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
   }
 
   func testManagedBuffers(buffer1: ManagedBuffer<Int, Int>, buffer2: ManagedBufferPointer<Int, Int>) {
-    testSendable(buffer1) // expected-warning {{conformance of 'ManagedBuffer<Header, Element>' to 'Sendable' is unavailable}}
+    testSendable(buffer1) // expected-warning {{conformance of 'ManagedBuffer<Header, Element>' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
 
-    testSendable(buffer2) // expected-warning {{conformance of 'ManagedBufferPointer<Header, Element>' to 'Sendable' is unavailable}}
+    testSendable(buffer2) // expected-warning {{conformance of 'ManagedBufferPointer<Header, Element>' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode}}
   }
 }
 
@@ -432,7 +432,7 @@ extension SynthesizedConformances.NotSendable: Sendable {}
 enum SynthesizedConformances {
   struct NotSendable: Equatable {}
 
-  // expected-warning@+2 2{{main actor-isolated property 'x' can not be referenced from a nonisolated context}}
+  // expected-warning@+2 2{{main actor-isolated property 'x' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode}}
   // expected-note@+1 2{{in static method '==' for derived conformance to 'Equatable'}}
   @MainActor struct Isolated: Equatable {
     let x: NotSendable // expected-note 2{{property declared here}}
@@ -463,7 +463,7 @@ func preconcurrencyContext(_: @escaping @Sendable () -> Void) {}
 struct DowngradeForPreconcurrency {
   func capture(completion: @escaping @MainActor () -> Void) {
     preconcurrencyContext {
-        Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+        Task { // expected-tns-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
             completion() // expected-tns-note {{closure captures 'completion' which is accessible to code in the current task}}
         // expected-warning@-1 {{capture of 'completion' with non-Sendable type '@MainActor () -> Void' in a '@Sendable' closure}}
         // expected-warning@-2 {{capture of 'completion' with non-Sendable type '@MainActor () -> Void' in an isolated closure}}
@@ -479,9 +479,9 @@ struct DowngradeForPreconcurrency {
   var x: NonSendable
   func createStream() -> AsyncStream<NonSendable> {
     AsyncStream<NonSendable> {
-      self.x // expected-tns-ni-warning {{assigning '$return_value' to task-isolated 'self.x.some' risks causing data races}}
+      self.x // expected-tns-ni-warning {{assigning '$return_value' to task-isolated 'self.x.some' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-tns-ni-note @-1 {{'$return_value' could become accessible to task-isolated code despite remaining accessible to code in the current task}}
-      // expected-tns-ni-ns-warning @-2 {{assigning '$return_value' to @concurrent task-isolated 'self.x.some' risks causing data races}}
+      // expected-tns-ni-ns-warning @-2 {{assigning '$return_value' to @concurrent task-isolated 'self.x.some' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-tns-ni-ns-note @-3 {{'$return_value' could become accessible to @concurrent task-isolated code despite remaining accessible to code in the current task}}
       // expected-warning @-4 {{main actor-isolated property 'x' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{7-7=await }}
       // expected-warning @-5 {{non-Sendable type 'NonSendable' of property 'x' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode}}

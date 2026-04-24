@@ -87,7 +87,7 @@ struct S: P {
 func checkConformer(_ s: S, _ p: any P, _ ma: MyActor) async {
   s.m(thing: ma)
   await p.m(thing: ma)
-  // expected-warning @-1 {{sending 'p' risks causing data races}}
+  // expected-warning @-1 {{sending 'p' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending task-isolated 'p' to actor-isolated instance method 'm(thing:)' risks causing data races between actor-isolated and task-isolated uses}}
 }
 
@@ -211,13 +211,13 @@ nonisolated func callFromNonisolated(ns: NotSendable) async {
   let myActor = A()
 
   await optionalIsolated(ns, to: myActor)
-  // expected-warning @-1 {{sending 'ns' risks causing data races}}
+  // expected-warning @-1 {{sending 'ns' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending task-isolated 'ns' to actor-isolated global function 'optionalIsolated(_:to:)' risks causing data races between actor-isolated and task-isolated uses}}
 }
 
 @MainActor func callFromMainActor(ns: NotSendable) async {
   await optionalIsolated(ns, to: nil)
-  // expected-warning @-1 {{sending 'ns' risks causing data races}}
+  // expected-warning @-1 {{sending 'ns' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending main actor-isolated 'ns' to nonisolated global function 'optionalIsolated(_:to:)' risks causing data races between nonisolated and main actor-isolated uses}}
 
   optionalIsolatedSync(ns, to: nil)
@@ -225,7 +225,7 @@ nonisolated func callFromNonisolated(ns: NotSendable) async {
   let myActor = A()
 
   await optionalIsolated(ns, to: myActor)
-  // expected-warning @-1 {{sending 'ns' risks causing data races}}
+  // expected-warning @-1 {{sending 'ns' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending main actor-isolated 'ns' to actor-isolated global function 'optionalIsolated(_:to:)' risks causing data races between actor-isolated and main actor-isolated uses}}
 
 }
@@ -251,7 +251,7 @@ func testNonSendableCaptures(ns: NotSendable, a: isolated MyActor) {
 
   // FIXME: The `a` in the capture list and `isolated a` are the same,
   // but the actor isolation checker doesn't know that.
-  Task { [a] in // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'a'-isolated code and concurrent execution of the closure}}
+  Task { [a] in // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'a'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     _ = a
     _ = ns // expected-note {{closure captures 'a'-isolated 'ns'}}
   }

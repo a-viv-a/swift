@@ -14,11 +14,11 @@ class C { // expected-note {{class 'C' does not conform to the 'Sendable' protoc
 func acceptsSendable<T: Sendable>(_: T) { }
 
 func testNoConcurrency(c: C) {
-  acceptsSendable(c) // expected-complete-warning {{type 'C' does not conform to the 'Sendable' protocol}}
+  acceptsSendable(c) // expected-complete-warning {{type 'C' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 }
 
 @available(SwiftStdlib 5.1, *)
 func testConcurrency(c: C) async {
-  acceptsSendable(c) // expected-warning{{type 'C' does not conform to the 'Sendable' protocol}}
+  acceptsSendable(c) // expected-warning{{type 'C' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 }
 

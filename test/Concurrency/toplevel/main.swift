@@ -26,7 +26,7 @@ func nonIsolatedSynchronous() {
 func nonIsolatedAsync() async {
   print(a)
   // expected-swift6-error@-1 {{main actor-isolated var 'a' cannot be accessed from outside of the actor}}
-  // expected-swift5-warning@-2 {{main actor-isolated var 'a' cannot be accessed from outside of the actor}}
+  // expected-swift5-warning@-2 {{main actor-isolated var 'a' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}}
 }
 
 await nonIsolatedAsync()

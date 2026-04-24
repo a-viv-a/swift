@@ -121,7 +121,7 @@ protocol Interface {
   nonisolated var baz: Int { get }
 }
 
-// expected-warning@+2{{conformance of 'Object' to protocol 'Interface' crosses into main actor-isolated code and can cause data races}}
+// expected-warning@+2{{conformance of 'Object' to protocol 'Interface' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode}}
 @MainActor
 class Object: Interface {
   // expected-note@-1{{turn data races into runtime errors with '@preconcurrency'}}{{15-15=@preconcurrency }}
@@ -399,7 +399,7 @@ struct HasWrapperOnActor {
     synced = 17
   }
 
-  @WrapperActor var actorSynced: Int = 0 // expected-warning {{'nonisolated' cannot be applied to mutable stored properties}}
+  @WrapperActor var actorSynced: Int = 0 // expected-warning {{'nonisolated' cannot be applied to mutable stored properties; this is an error in the Swift 6 language mode}}
   func testActorSynced() {
     _ = actorSynced
     _ = $actorSynced

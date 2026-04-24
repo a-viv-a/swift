@@ -23,6 +23,6 @@ class MyError: Error { // expected-warning{{non-final class 'MyError' cannot con
 
 func testWarnings() {
   _ = rs
-  _ = globalInt // expected-warning{{reference to var 'globalInt' is not concurrency-safe because it involves shared mutable state}}
-  globalInt += 1 // expected-warning{{reference to var 'globalInt' is not concurrency-safe because it involves shared mutable state}}
+  _ = globalInt // expected-warning{{reference to var 'globalInt' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode}}
+  globalInt += 1 // expected-warning{{reference to var 'globalInt' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode}}
 }

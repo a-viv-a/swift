@@ -24,7 +24,7 @@ func testUnsafeSendableInMainAsync() async {
   var x = 5
   DispatchQueue.main.async {
     x = 17 // expected-warning{{mutation of captured var 'x' in concurrently-executing code}}
-    // expected-tns-warning @-1 {{sending 'x' risks causing data races}}
+    // expected-tns-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-tns-note @-2 {{'x' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses}}
   }
   print(x) // expected-tns-note {{access can happen concurrently}}

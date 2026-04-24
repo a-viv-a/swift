@@ -109,14 +109,14 @@ func nonescapingAsyncClosure(_ x: () async -> ()) {}
 extension MyActor {
   func warningIfCallingGetter() async {
     await self.klass.asyncCall()
-    // expected-ni-warning @-1 {{sending 'self.klass' risks causing data races}}
+    // expected-ni-warning @-1 {{sending 'self.klass' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-ni-note @-2 {{sending 'self'-isolated 'self.klass' to nonisolated instance method 'asyncCall()' risks causing data races between nonisolated and 'self'-isolated uses}}
   }
 
   func warningIfCallingAsyncOnFinalField() async {
     // Since we are calling finalKlass directly, we emit a warning here.
     await self.finalKlass.asyncCall()
-    // expected-ni-warning @-1 {{sending 'self.finalKlass' risks causing data races}}
+    // expected-ni-warning @-1 {{sending 'self.finalKlass' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-ni-note @-2 {{sending 'self'-isolated 'self.finalKlass' to nonisolated instance method 'asyncCall()' risks causing data races between nonisolated and 'self'-isolated uses}}
   }
 
@@ -130,7 +130,7 @@ extension FinalActor {
   func warningIfCallingAsyncOnFinalField() async {
     // Since our whole class is final, we emit the error directly here.
     await self.klass.asyncCall()
-    // expected-ni-warning @-1 {{sending 'self.klass' risks causing data races}}
+    // expected-ni-warning @-1 {{sending 'self.klass' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-ni-note @-2 {{sending 'self'-isolated 'self.klass' to nonisolated instance method 'asyncCall()' risks causing data races between nonisolated and 'self'-isolated uses}}
   }
 }
@@ -160,7 +160,7 @@ func closureInOut(_ a: MyActor) async {
 
   await a.useKlass(ns0)
 
-  // expected-warning @-2 {{sending 'ns0' risks causing data races}}
+  // expected-warning @-2 {{sending 'ns0' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-3 {{sending 'ns0' to actor-isolated instance method 'useKlass' risks causing data races between actor-isolated and local nonisolated uses}}
 
   if await booleanFlag {
@@ -183,7 +183,7 @@ func closureInOutDifferentActor(_ a: MyActor, _ a2: MyActor) async {
 
   await a.useKlass(ns0)
 
-  // expected-warning @-2 {{sending 'ns0' risks causing data races}}
+  // expected-warning @-2 {{sending 'ns0' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-3 {{sending 'ns0' to actor-isolated instance method 'useKlass' risks causing data races between actor-isolated and local nonisolated uses}}
 
   // We only emit a warning on the first use we see, so make sure we do both
@@ -207,13 +207,13 @@ func closureInOut2(_ a: MyActor) async {
 
   var closure = {}
 
-  await a.useKlass(ns0) // expected-warning {{sending 'ns0' risks causing data races}}
+  await a.useKlass(ns0) // expected-warning {{sending 'ns0' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'ns0' to actor-isolated instance method 'useKlass' risks causing data races between actor-isolated and local nonisolated uses}}
 
 
   closure = { useInOut(&contents) } // expected-note {{access can happen concurrently}}
 
-  await a.useKlass(ns1) // expected-warning {{sending 'ns1' risks causing data races}}
+  await a.useKlass(ns1) // expected-warning {{sending 'ns1' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'ns1' to actor-isolated instance method 'useKlass' risks causing data races between actor-isolated and local nonisolated uses}}
 
 
@@ -235,7 +235,7 @@ func closureNonInOut(_ a: MyActor) async {
 
   closure = { useValue(contents) }
 
-  await a.useKlass(ns1) // expected-warning {{sending 'ns1' risks causing data races}}
+  await a.useKlass(ns1) // expected-warning {{sending 'ns1' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'ns1' to actor-isolated instance method 'useKlass' risks causing data races between actor-isolated and local nonisolated uses}}
 
 
@@ -267,7 +267,7 @@ extension MyActor {
     }
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -278,7 +278,7 @@ extension MyActor {
     let x = (1, closure)
     await transferToMain(x)
 
-    // expected-warning @-2 {{sending value of non-Sendable type '(Int, () -> ())' risks causing data races}}
+    // expected-warning @-2 {{sending value of non-Sendable type '(Int, () -> ())' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated value of non-Sendable type '(Int, () -> ())' to main actor-isolated global function 'transferToMain' risks causing races in between 'self'-isolated and main actor-isolated uses}}
   }
 
@@ -288,7 +288,7 @@ extension MyActor {
     }
 
     let x = (closure, 1)
-    await transferToMain(x) // expected-warning {{sending value of non-Sendable type '(() -> (), Int)' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending value of non-Sendable type '(() -> (), Int)' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated value of non-Sendable type '(() -> (), Int)' to main actor-isolated global function 'transferToMain' risks causing races in between 'self'-isolated and main actor-isolated uses}}
   }
 
@@ -298,7 +298,7 @@ extension MyActor {
     }
     let x: Any? = (1, closure)
     await transferToMain(x)
-    // expected-warning @-1 {{sending 'x' risks causing data races}}
+    // expected-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-2 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -311,7 +311,7 @@ extension MyActor {
     // store it all as once.
     let x: Any? = (closure, 1)
     await transferToMain(x)
-    // expected-warning @-1 {{sending 'x' risks causing data races}}
+    // expected-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-2 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -323,7 +323,7 @@ extension MyActor {
     // Error here.
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
     closure = {}
@@ -349,7 +349,7 @@ extension MyActor {
     // Error here.
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -359,7 +359,7 @@ extension MyActor {
     // We get a transfer after use error.
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local actor-isolated uses}}
 
     if await booleanFlag {
@@ -371,7 +371,7 @@ extension MyActor {
     await transferToMain(closure)
 
     // expected-note @-2 {{access can happen concurrently}}
-    // expected-warning @-3 {{sending 'closure' risks causing data races}}
+    // expected-warning @-3 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-4 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -394,7 +394,7 @@ extension MyActor {
 
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -405,7 +405,7 @@ extension MyActor {
     }
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -416,7 +416,7 @@ extension MyActor {
     }
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -427,7 +427,7 @@ extension MyActor {
     }
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 }
@@ -458,7 +458,7 @@ extension MyActor {
     }
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 
@@ -471,7 +471,7 @@ extension MyActor {
     }
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
   }
 }
@@ -485,7 +485,7 @@ extension MyActor {
     // This should error.
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'self'-isolated 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
     // This doesnt since we re-assign
@@ -499,7 +499,7 @@ extension MyActor {
     // But this transfer should.
     await transferToMain(closure)
 
-    // expected-warning @-2 {{sending 'closure' risks causing data races}}
+    // expected-warning @-2 {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-3 {{sending 'closure' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local actor-isolated uses}}
 
     // But this will error since we race.
@@ -511,7 +511,7 @@ func testNoncopyableNonsendableStructWithNonescapingMainActorAsync() {
   let x = NoncopyableStructNonsendable()
   let _ = {
     nonescapingAsyncClosure { @MainActor in
-      useValueNoncopyable(x) // expected-warning {{sending 'x' risks causing data races}}
+      useValueNoncopyable(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'x' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses}}
     }
   }
@@ -533,14 +533,14 @@ func testConversionsAndSendable(a: MyActor, f: @Sendable () -> Void, f2: () -> V
   // Show that we error if we are not sendable.
   await a.useNonSendableFunction(f2)
 
-  // expected-warning @-2 {{sending 'f2' risks causing data races}}
+  // expected-warning @-2 {{sending 'f2' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-3 {{sending task-isolated 'f2' to actor-isolated instance method 'useNonSendableFunction' risks causing data races between actor-isolated and task-isolated uses}}
 }
 
 func testSendableClosureCapturesNonSendable(a: MyActor) {
   let klass = NonSendableKlass()
   let _ = { @Sendable in
-    _ = klass // expected-warning {{capture of 'klass' with non-Sendable type 'NonSendableKlass' in a '@Sendable' closure}}
+    _ = klass // expected-warning {{capture of 'klass' with non-Sendable type 'NonSendableKlass' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
   }
 }
 
@@ -578,7 +578,7 @@ func singleFieldVarMergeTest() async {
   useValue(box)
   useValue(box.k)
 
-  await transferToMain(box) // expected-warning {{sending 'box' risks causing data races}}
+  await transferToMain(box) // expected-warning {{sending 'box' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'box' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
 
@@ -593,7 +593,7 @@ func multipleFieldVarMergeTest1() async {
   box = TwoFieldKlassBox()
 
   // This transfers the entire region.
-  await transferToMain(box.k1) // expected-warning {{sending 'box.k1' risks causing data races}}
+  await transferToMain(box.k1) // expected-warning {{sending 'box.k1' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'box.k1' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
 
@@ -634,7 +634,7 @@ func multipleFieldTupleMergeTest1() async {
   box = (NonSendableKlass(), NonSendableKlass())
 
   // This transfers the entire region.
-  await transferToMain(box.0) // expected-warning {{sending 'box.0' risks causing data races}}
+  await transferToMain(box.0) // expected-warning {{sending 'box.0' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'box.0' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
 
@@ -687,7 +687,7 @@ class ClassFieldTests {
 
 func letSendableTrivialClassFieldTest() async {
   let test = ClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letSendableTrivial
@@ -696,7 +696,7 @@ func letSendableTrivialClassFieldTest() async {
 
 func letSendableNonTrivialClassFieldTest() async {
   let test = ClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
 
@@ -706,7 +706,7 @@ func letSendableNonTrivialClassFieldTest() async {
 
 func letNonSendableNonTrivialClassFieldTest() async {
   let test = ClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letNonSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -715,7 +715,7 @@ func letNonSendableNonTrivialClassFieldTest() async {
 
 func varSendableTrivialClassFieldTest() async {
   let test = ClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varSendableTrivial // expected-note {{access can happen concurrently}}
@@ -724,7 +724,7 @@ func varSendableTrivialClassFieldTest() async {
 
 func varSendableNonTrivialClassFieldTest() async {
   let test = ClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varSendableNonTrivial  // expected-note {{access can happen concurrently}}
@@ -733,7 +733,7 @@ func varSendableNonTrivialClassFieldTest() async {
 
 func varNonSendableNonTrivialClassFieldTest() async {
   let test = ClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varNonSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -755,7 +755,7 @@ final class FinalClassFieldTests {
 
 func letSendableTrivialFinalClassFieldTest() async {
   let test = FinalClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letSendableTrivial
@@ -764,7 +764,7 @@ func letSendableTrivialFinalClassFieldTest() async {
 
 func letSendableNonTrivialFinalClassFieldTest() async {
   let test = FinalClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letSendableNonTrivial
@@ -773,7 +773,7 @@ func letSendableNonTrivialFinalClassFieldTest() async {
 
 func letNonSendableNonTrivialFinalClassFieldTest() async {
   let test = FinalClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letNonSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -782,7 +782,7 @@ func letNonSendableNonTrivialFinalClassFieldTest() async {
 
 func varSendableTrivialFinalClassFieldTest() async {
   let test = FinalClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varSendableTrivial // expected-note {{access can happen concurrently}}
@@ -791,7 +791,7 @@ func varSendableTrivialFinalClassFieldTest() async {
 
 func varSendableNonTrivialFinalClassFieldTest() async {
   let test = FinalClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varSendableNonTrivial  // expected-note {{access can happen concurrently}}
@@ -800,7 +800,7 @@ func varSendableNonTrivialFinalClassFieldTest() async {
 
 func varNonSendableNonTrivialFinalClassFieldTest() async {
   let test = FinalClassFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varNonSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -822,7 +822,7 @@ struct StructFieldTests {
 
 func letSendableTrivialLetStructFieldTest() async {
   let test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letSendableTrivial // expected-note {{access can happen concurrently}}
@@ -831,7 +831,7 @@ func letSendableTrivialLetStructFieldTest() async {
 
 func letSendableNonTrivialLetStructFieldTest() async {
   let test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -840,7 +840,7 @@ func letSendableNonTrivialLetStructFieldTest() async {
 
 func letNonSendableNonTrivialLetStructFieldTest() async {
   let test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.letNonSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -851,7 +851,7 @@ func letNonSendableNonTrivialLetStructFieldTest() async {
 func letSendableTrivialVarStructFieldTest() async {
   var test = StructFieldTests()
   test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letSendableTrivial
@@ -861,7 +861,7 @@ func letSendableTrivialVarStructFieldTest() async {
 func letSendableNonTrivialVarStructFieldTest() async {
   var test = StructFieldTests()
   test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.letSendableNonTrivial
@@ -871,7 +871,7 @@ func letSendableNonTrivialVarStructFieldTest() async {
 func letNonSendableNonTrivialVarStructFieldTest() async {
   var test = StructFieldTests()
   test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.letNonSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -891,7 +891,7 @@ func letNonSendableNonTrivialLetStructFieldClosureTest() async {
     print(test)
   }
   _ = cls2
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.letSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -903,7 +903,7 @@ func letNonSendableNonTrivialLetStructFieldClosureTest() async {
 
 func varSendableTrivialLetStructFieldTest() async {
   let test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varSendableTrivial // expected-note {{access can happen concurrently}}
@@ -912,7 +912,7 @@ func varSendableTrivialLetStructFieldTest() async {
 
 func varSendableNonTrivialLetStructFieldTest() async {
   let test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -921,7 +921,7 @@ func varSendableNonTrivialLetStructFieldTest() async {
 
 func varNonSendableNonTrivialLetStructFieldTest() async {
   let test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.varNonSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -932,7 +932,7 @@ func varNonSendableNonTrivialLetStructFieldTest() async {
 func varSendableTrivialVarStructFieldTest() async {
   var test = StructFieldTests()
   test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varSendableTrivial
@@ -942,7 +942,7 @@ func varSendableTrivialVarStructFieldTest() async {
 func varSendableNonTrivialVarStructFieldTest() async {
   var test = StructFieldTests()
   test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.varSendableNonTrivial
@@ -952,7 +952,7 @@ func varSendableNonTrivialVarStructFieldTest() async {
 func varNonSendableNonTrivialVarStructFieldTest() async {
   var test = StructFieldTests()
   test = StructFieldTests()
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.varNonSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -968,7 +968,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest1() async {
     test = StructFieldTests()
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.letSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -983,7 +983,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest2() async {
     test = StructFieldTests()
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.varSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -998,7 +998,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest3() async {
     test = StructFieldTests()
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   test.varSendableNonTrivial = SendableKlass() // expected-note {{access can happen concurrently}}
@@ -1014,7 +1014,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest4() async {
     test = StructFieldTests()
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.letSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -1030,7 +1030,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest5() async {
     test = StructFieldTests()
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.varSendableNonTrivial // expected-note {{access can happen concurrently}}
@@ -1046,7 +1046,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest6() async {
     test = StructFieldTests()
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   test.varSendableNonTrivial = SendableKlass() // expected-note {{access can happen concurrently}}
@@ -1061,7 +1061,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest7() async {
     test.varSendableNonTrivial = SendableKlass()
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   test.varSendableNonTrivial = SendableKlass() // expected-note {{access can happen concurrently}}
@@ -1076,7 +1076,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest8() async {
     useInOut(&test)
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   test.varSendableNonTrivial = SendableKlass() // expected-note {{access can happen concurrently}}
@@ -1091,7 +1091,7 @@ func varNonSendableNonTrivialLetStructFieldClosureTest9() async {
     useInOut(&test.varSendableNonTrivial)
   }
   _ = cls
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   test.varSendableNonTrivial = SendableKlass() // expected-note {{access can happen concurrently}}
@@ -1109,7 +1109,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive1() async {
     }
     _ = cls
   } else {
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
 
@@ -1130,7 +1130,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive2() async {
     }
     _ = cls
 
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   }
@@ -1152,7 +1152,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive3() async {
     }
     _ = cls
   } else {
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   }
@@ -1172,7 +1172,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive4() async {
     // loop carry use and an error due to multiple params. Then we could emit
     // the error on test below. This is still correct though, just not as
     // good... that is QoI though.
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
     // expected-note @-2 {{access can happen concurrently}}
 
@@ -1201,7 +1201,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive5() async {
   // this. This is a case where we are going to need to be able to have the
   // compiler explain the regions well.
   for _ in 0..<1024 {
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
     // expected-note @-2 {{access can happen concurrently}}
 
@@ -1225,11 +1225,11 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive6() async {
       useInOut(&test.varSendableNonTrivial)
     }
     _ = cls
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   } else {
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   }
@@ -1246,7 +1246,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive7() async {
   var cls = {}
 
   if await booleanFlag {
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   } else {
@@ -1254,7 +1254,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive7() async {
       useInOut(&test.varSendableNonTrivial)
     }
     _ = cls
-    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+    await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   }
@@ -1269,7 +1269,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive7() async {
 
 func varSendableTrivialLetTupleFieldTest() async {
   let test = (0, SendableKlass(), NonSendableKlass())
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.0
@@ -1279,7 +1279,7 @@ func varSendableTrivialLetTupleFieldTest() async {
 
 func varSendableNonTrivialLetTupleFieldTest() async {
   let test = (0, SendableKlass(), NonSendableKlass())
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.1
@@ -1289,7 +1289,7 @@ func varSendableNonTrivialLetTupleFieldTest() async {
 
 func varNonSendableNonTrivialLetTupleFieldTest() async {
   let test = (0, SendableKlass(), NonSendableKlass())
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.2 // expected-note {{access can happen concurrently}}
@@ -1300,7 +1300,7 @@ func varNonSendableNonTrivialLetTupleFieldTest() async {
 func varSendableTrivialVarTupleFieldTest() async {
   var test = (0, SendableKlass(), NonSendableKlass())
   test = (0, SendableKlass(), NonSendableKlass())
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.0
@@ -1310,7 +1310,7 @@ func varSendableTrivialVarTupleFieldTest() async {
 func varSendableTrivialVarTupleFieldTest2() async {
   var test = (0, SendableKlass(), NonSendableKlass())
   test = (0, SendableKlass(), NonSendableKlass())
-  await transferToMain(test.2) // expected-warning {{sending 'test.2' risks causing data races}}
+  await transferToMain(test.2) // expected-warning {{sending 'test.2' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test.2' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.0
@@ -1320,7 +1320,7 @@ func varSendableTrivialVarTupleFieldTest2() async {
 func varSendableNonTrivialVarTupleFieldTest() async {
   var test = (0, SendableKlass(), NonSendableKlass())
   test = (0, SendableKlass(), NonSendableKlass())
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   _ = test.1
@@ -1330,7 +1330,7 @@ func varSendableNonTrivialVarTupleFieldTest() async {
 func varNonSendableNonTrivialVarTupleFieldTest() async {
   var test = (0, SendableKlass(), NonSendableKlass())
   test = (0, SendableKlass(), NonSendableKlass())
-  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
+  await transferToMain(test) // expected-warning {{sending 'test' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   let z = test.2 // expected-note {{access can happen concurrently}}
@@ -1346,11 +1346,11 @@ func controlFlowTest1() async {
   let x = NonSendableKlass()
 
   if await booleanFlag {
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   } else {
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   }
@@ -1370,7 +1370,7 @@ func controlFlowTest2() async {
   var x = NonSendableKlass()
 
   for _ in 0..<1024 {
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
     // expected-note @-2 {{access can happen concurrently}}
 
@@ -1395,7 +1395,7 @@ actor ActorWithSetter {
   func test1() async {
     let x = NonSendableKlass()
     self.field = x
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1403,7 +1403,7 @@ actor ActorWithSetter {
   func test2() async {
     let x = NonSendableKlass()
     self.twoFieldBox.k1 = x
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1411,7 +1411,7 @@ actor ActorWithSetter {
   func test3() async {
     let x = NonSendableKlass()
     self.twoFieldBoxInTuple.1.k1 = x
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1419,7 +1419,7 @@ actor ActorWithSetter {
   func classBox() async {
     let x = NonSendableKlass()
     self.classBox.k1 = x
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1435,7 +1435,7 @@ final actor FinalActorWithSetter {
   func test1() async {
     let x = NonSendableKlass()
     self.field = x
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1443,7 +1443,7 @@ final actor FinalActorWithSetter {
   func test2() async {
     let x = NonSendableKlass()
     self.twoFieldBox.k1 = x
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1451,7 +1451,7 @@ final actor FinalActorWithSetter {
   func test3() async {
     let x = NonSendableKlass()
     self.twoFieldBoxInTuple.1.k1 = x
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1459,7 +1459,7 @@ final actor FinalActorWithSetter {
   func classBox() async {
     let x = NonSendableKlass()
     self.classBox.k1 = x
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1467,7 +1467,7 @@ final actor FinalActorWithSetter {
 
 func functionArgumentIntoClosure(_ x: @escaping () -> ()) async {
   let _ = { @MainActor in
-    let _ = x // expected-warning {{sending 'x' risks causing data races}}
+    let _ = x // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{task-isolated 'x' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses}}
 
 
@@ -1487,7 +1487,7 @@ func functionArgumentIntoClosure(_ x: @escaping () -> ()) async {
     // loop we are disconnected... meaning that we are ok. The second time
     // through the loop, we are now main actor isolated, but again b/c we
     // inherit isolation, we are ok.
-    await useValueAsync(c) // expected-ni-warning {{sending 'c' risks causing data races}}
+    await useValueAsync(c) // expected-ni-warning {{sending 'c' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-ni-note @-1 {{sending main actor-isolated 'c' to nonisolated global function 'useValueAsync' risks causing data races between nonisolated and main actor-isolated uses}}
 
     c = a.klass
@@ -1498,7 +1498,7 @@ func functionArgumentIntoClosure(_ x: @escaping () -> ()) async {
   let a = MainActorIsolatedKlass()
   var c = NonSendableKlass()
   for _ in 0..<1024 {
-    await useValueAsync(c) // expected-ni-warning {{sending 'c' risks causing data races}}
+    await useValueAsync(c) // expected-ni-warning {{sending 'c' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-ni-note @-1 {{sending main actor-isolated 'c' to nonisolated global function 'useValueAsync' risks causing data races between nonisolated and main actor-isolated uses}}
 
     c = a.klassLet
@@ -1508,7 +1508,7 @@ func functionArgumentIntoClosure(_ x: @escaping () -> ()) async {
 func testGetActorName() async {
   let a = MyActor()
   let x = NonSendableKlass()
-  await a.useKlass(x) // expected-warning {{sending 'x' risks causing data races}}
+  await a.useKlass(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to actor-isolated instance method 'useKlass' risks causing data races between actor-isolated and local nonisolated uses}}
 
   useValue(x) // expected-note {{access can happen concurrently}}
@@ -1516,7 +1516,7 @@ func testGetActorName() async {
 
 extension MyActor {
   func testCallBangIsolatedMethod(other: MyActor) async {
-    await klass.asyncCallWithIsolatedParameter(isolation: other) // expected-warning {{sending 'self.klass' risks causing data races}}
+    await klass.asyncCallWithIsolatedParameter(isolation: other) // expected-warning {{sending 'self.klass' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'self.klass' to actor-isolated instance method 'asyncCallWithIsolatedParameter(isolation:)' risks causing data races between actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1524,7 +1524,7 @@ extension MyActor {
 
 extension FinalActor {
   func testCallBangIsolatedMethod(other: MyActor) async {
-    await klass.asyncCallWithIsolatedParameter(isolation: other) // expected-warning {{sending 'self.klass' risks causing data races}}
+    await klass.asyncCallWithIsolatedParameter(isolation: other) // expected-warning {{sending 'self.klass' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'self.klass' to actor-isolated instance method 'asyncCallWithIsolatedParameter(isolation:)' risks causing data races between actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1537,7 +1537,7 @@ extension NonSendableKlass {
 
 extension MyActor {
   func testCallBangIsolatedDirectMethod(other: MyActor) async {
-    await klass.directAsyncCallWithIsolatedParameter(isolation: other) // expected-warning {{sending 'self.klass' risks causing data races}}
+    await klass.directAsyncCallWithIsolatedParameter(isolation: other) // expected-warning {{sending 'self.klass' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'self.klass' to actor-isolated instance method 'directAsyncCallWithIsolatedParameter(isolation:)' risks causing data races between actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1545,7 +1545,7 @@ extension MyActor {
 
 extension FinalActor {
   func testCallBangIsolatedDirectMethod(other: MyActor) async {
-    await klass.directAsyncCallWithIsolatedParameter(isolation: other) // expected-warning {{sending 'self.klass' risks causing data races}}
+    await klass.directAsyncCallWithIsolatedParameter(isolation: other) // expected-warning {{sending 'self.klass' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'self'-isolated 'self.klass' to actor-isolated instance method 'directAsyncCallWithIsolatedParameter(isolation:)' risks causing data races between actor-isolated and 'self'-isolated uses}}
 
   }
@@ -1575,7 +1575,7 @@ extension MyActor {
       let x = NonSendableKlass()
       self.useKlass(x)
       await transferToMain(x)
-      // expected-warning @-1 {{sending 'x' risks causing data races}}
+      // expected-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-2 {{sending 'self'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'self'-isolated uses}}
 
     }
@@ -1636,7 +1636,7 @@ func initAccessorTests() {
 func differentInstanceTest(_ a: MyActor, _ b: MyActor) async {
   let x = NonSendableKlass()
   await a.useKlass(x)
-  // expected-warning @-1 {{sending 'x' risks causing data races}}
+  // expected-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{sending 'x' to actor-isolated instance method 'useKlass' risks causing data races between actor-isolated and local nonisolated uses}}
 
   await b.useKlass(x) // expected-note {{access can happen concurrently}}
@@ -1651,7 +1651,7 @@ func associatedTypeTestBasic<T: AssociatedTypeTestProtocol>(_: T, _: isolated T.
 }
 
 func associatedTypeTestBasic2<T: AssociatedTypeTestProtocol>(_: T, iso: isolated T.A, x: NonSendableKlass) async {
-  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'iso'-isolated 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and 'iso'-isolated uses}}
 
 }
@@ -1659,7 +1659,7 @@ func associatedTypeTestBasic2<T: AssociatedTypeTestProtocol>(_: T, iso: isolated
 func sendableGlobalActorIsolated() {
   let x = NonSendableKlass()
   let _ = { @Sendable @MainActor in
-    print(x) // expected-warning {{sending 'x' risks causing data races}}
+    print(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{'x' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses}}
 
   }
@@ -1672,7 +1672,7 @@ func sendableGlobalActorIsolated() {
 // value.
 func testIndirectParameterSameIsolationNoError() async {
   let x = NonSendableKlass()
-  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
   await transferToMain(x) // expected-note {{access can happen concurrently}}
 }
@@ -1687,11 +1687,11 @@ extension MyActor {
         _ = self
         _ = sc
 
-        Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+        Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
           _ = sc // expected-note {{closure captures 'self'-isolated 'sc'}}
         }
 
-        Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+        Task { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
           _ = sc // expected-note {{closure captures 'self'-isolated 'sc'}}
         }
       }
@@ -1746,7 +1746,7 @@ actor FunctionWithSendableResultAndIsolationActor {
 @MainActor
 func previouslyBrokenTestCase(ns: NonSendableKlass) async -> SendableGenericStruct? {
   return await { () -> SendableGenericStruct? in
-    return await ns.getSendableGenericStructAsync() // expected-ni-warning {{sending 'ns' risks causing data races}}
+    return await ns.getSendableGenericStructAsync() // expected-ni-warning {{sending 'ns' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-ni-note @-1 {{sending main actor-isolated 'ns' to nonisolated instance method 'getSendableGenericStructAsync()' risks causing data races between nonisolated and main actor-isolated uses}}
   }()
 }
@@ -1785,14 +1785,14 @@ public class Context {
 
 extension MyActor {
   public func withContext<T>(_ block: sending (NonSendableKlass) throws -> T) async throws -> sending T {
-    return try block(klass) // expected-warning {{returning 'self'-isolated 'self.klass' as a 'sending' result risks causing data races}}
+    return try block(klass) // expected-warning {{returning 'self'-isolated 'self.klass' as a 'sending' result risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'self'-isolated 'self.klass' risks causing data races since the caller assumes that 'self.klass' can be safely sent to other isolation domains}}
   }
 }
 
 func nonSendableAllocBoxConsumingParameter(x: consuming SendableKlass) async throws {
   try await withThrowingTaskGroup(of: Void.self) { group in
-    group.addTask { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    group.addTask { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       useValue(x) // expected-note {{closure captures reference to mutable parameter 'x' which remains modifiable by code in the current task}}
     }
 
@@ -1805,7 +1805,7 @@ func nonSendableAllocBoxConsumingVar() async throws {
   x = SendableKlass()
 
   try await withThrowingTaskGroup(of: Void.self) { group in
-    group.addTask { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    group.addTask { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       useValue(x) // expected-note {{closure captures reference to mutable var 'x' which remains modifiable by code in the current task}}
     }
 
@@ -1824,7 +1824,7 @@ func offByOneWithImplicitPartialApply() {
       func b() {
           let asdf = ""
           Task { @MainActor in
-            a.description = asdf // expected-warning {{sending 'self' risks causing data races}}
+            a.description = asdf // expected-warning {{sending 'self' risks causing data races; this is an error in the Swift 6 language mode}}
             // expected-note @-1 {{task-isolated 'self' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses}}
           }
       }
@@ -1863,7 +1863,7 @@ func testIndirectAndDirectSendingResultsWithGlobalActor() async {
 func testFunctionIsNotEmpty(input: SendableKlass) async throws {
   var result: [SendableKlass] = []
   try await withThrowingTaskGroup(of: Void.self) { taskGroup in // expected-warning {{no calls to throwing functions occur within 'try' expression}}
-    taskGroup.addTask { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    taskGroup.addTask { // expected-warning {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       result.append(input) // expected-note {{closure captures reference to mutable var 'result' which remains modifiable by code in the current task}}
     }
   }
@@ -1884,7 +1884,7 @@ extension NonIsolatedFinalKlass {
   // We used to crash while computing the isolation of the ref_element_addr
   // here. Make sure we do not crash.
   func testGetIsolationInfoOfField() async {
-    await transferToMain(ns) // expected-warning {{sending 'self.ns' risks causing data races}}
+    await transferToMain(ns) // expected-warning {{sending 'self.ns' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending task-isolated 'self.ns' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and task-isolated uses}}
   }
 }
@@ -1895,9 +1895,9 @@ func mutableLocalCaptureDataRace() async {
   _ = x
 
   Task.detached { x = 1 }
-  // expected-ni-warning @-1 {{sending value of non-Sendable type '() async -> ()' risks causing data races}}
+  // expected-ni-warning @-1 {{sending value of non-Sendable type '() async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-2 {{Passing value of non-Sendable type '() async -> ()' as a 'sending' argument to static method 'detached(name:priority:operation:)' risks causing races in between local and caller code}}
-  // expected-ni-ns-warning @-3 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races}}
+  // expected-ni-ns-warning @-3 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-ns-note @-4 {{Passing value of non-Sendable type '@concurrent () async -> ()' as a 'sending' argument to static method 'detached(name:priority:operation:)' risks causing races in between local and caller code}}
 
   x = 2 // expected-note {{access can happen concurrently}}
@@ -1908,9 +1908,9 @@ func mutableLocalCaptureDataRace2() async {
   x = 0
 
   Task.detached { x = 1 }
-  // expected-ni-warning @-1 {{sending value of non-Sendable type '() async -> ()' risks causing data races}}
+  // expected-ni-warning @-1 {{sending value of non-Sendable type '() async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-2 {{Passing value of non-Sendable type '() async -> ()' as a 'sending' argument to static method 'detached(name:priority:operation:)' risks causing races in between local and caller code}}
-  // expected-ni-ns-warning @-3 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races}}
+  // expected-ni-ns-warning @-3 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-ns-note @-4 {{Passing value of non-Sendable type '@concurrent () async -> ()' as a 'sending' argument to static method 'detached(name:priority:operation:)' risks causing races in between local and caller code}}
 
   print(x) // expected-note {{access can happen concurrently}}
@@ -1928,7 +1928,7 @@ nonisolated func localCaptureDataRace4() {
   var x = 0
   _ = x
 
-  Task.detached { @MainActor in x = 1 } // expected-warning {{sending 'x' risks causing data races}}
+  Task.detached { @MainActor in x = 1 } // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{'x' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses}}
 
   x = 2 // expected-note {{access can happen concurrently}}
@@ -2004,7 +2004,7 @@ func inferLocationOfCapturedTaskIsolatedSelfCorrectly() {
 
     func d() {
       a.block = c
-      // expected-warning @-1 {{sending 'self' risks causing data races}}
+      // expected-warning @-1 {{sending 'self' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-2 {{task-isolated 'self' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses}}
     }
 
@@ -2014,9 +2014,9 @@ func inferLocationOfCapturedTaskIsolatedSelfCorrectly() {
 }
 
 nonisolated(nonsending) func testCallNonisolatedNonsending(_ x: NonSendableKlass) async {
-  await useValueAsync(x) // expected-ni-warning {{sending 'x' risks causing data races}}
+  await useValueAsync(x) // expected-ni-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending nonisolated(nonsending) task-isolated 'x' to nonisolated global function 'useValueAsync' risks causing data races between nonisolated and nonisolated(nonsending) task-isolated uses}}
-  await useValueAsyncConcurrent(x) // expected-warning {{sending 'x' risks causing data races}}
+  await useValueAsyncConcurrent(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending nonisolated(nonsending) task-isolated 'x' to nonisolated global function 'useValueAsyncConcurrent' risks causing data races between nonisolated and nonisolated(nonsending) task-isolated uses}}
   // expected-ni-ns-note @-2 {{sending task-isolated 'x' to @concurrent global function 'useValueAsyncConcurrent' risks causing data races between @concurrent and task-isolated uses}}
 }
@@ -2028,12 +2028,12 @@ func avoidThinkingClosureParameterIsSending() {
 
     func perform() {
         Task { [value] in
-          await value.asyncCall() // expected-ni-warning {{sending 'value' risks causing data races}}
+          await value.asyncCall() // expected-ni-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
           // expected-ni-note @-1 {{sending main actor-isolated 'value' to nonisolated instance method 'asyncCall()' risks causing data races between nonisolated and main actor-isolated uses}}
         }
 
         Task {
-          await value.asyncCall() // expected-ni-warning {{sending 'self.value' risks causing data races}}
+          await value.asyncCall() // expected-ni-warning {{sending 'self.value' risks causing data races; this is an error in the Swift 6 language mode}}
           // expected-ni-note @-1 {{sending main actor-isolated 'self.value' to nonisolated instance method 'asyncCall()' risks causing data races between nonisolated and main actor-isolated uses}}
         }
     }
@@ -2043,9 +2043,9 @@ func avoidThinkingClosureParameterIsSending() {
 enum RequireSrcWhenStoringEvenWhenSendable {
   func test<T: Sendable>(t: T) {
     var result: T = t
-    Task { // expected-ni-warning {{sending value of non-Sendable type '() async -> ()' risks causing data races}}
+    Task { // expected-ni-warning {{sending value of non-Sendable type '() async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-ni-note @-1 {{Passing value of non-Sendable type '() async -> ()' as a 'sending' argument to initializer 'init(name:priority:operation:)' risks causing races in between local and caller code}}
-      // expected-ni-ns-warning @-2 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races}}
+      // expected-ni-ns-warning @-2 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-ni-ns-note @-3 {{Passing value of non-Sendable type '@concurrent () async -> ()' as a 'sending' argument to initializer 'init(name:priority:operation:)' risks causing races in between local and caller code}}
       result = t
     }
@@ -2054,9 +2054,9 @@ enum RequireSrcWhenStoringEvenWhenSendable {
 
   func test2() {
     var result: Any = 0
-    Task { // expected-ni-warning {{sending value of non-Sendable type '() async -> ()' risks causing data races}}
+    Task { // expected-ni-warning {{sending value of non-Sendable type '() async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-ni-note @-1 {{Passing value of non-Sendable type '() async -> ()' as a 'sending' argument to initializer 'init(name:priority:operation:)' risks causing races in between local and caller code}}
-      // expected-ni-ns-warning @-2 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races}}
+      // expected-ni-ns-warning @-2 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-ni-ns-note @-3 {{Passing value of non-Sendable type '@concurrent () async -> ()' as a 'sending' argument to initializer 'init(name:priority:operation:)' risks causing races in between local and caller code}}
       result = 0
     }
@@ -2069,9 +2069,9 @@ enum RequireSrcWhenStoringEvenWhenSendable {
 
   func test3<T: Initializable & SendableMetatype>(type: T.Type) {
     var result = type.init()
-    Task { // expected-ni-warning {{sending value of non-Sendable type '() async -> ()' risks causing data races}}
+    Task { // expected-ni-warning {{sending value of non-Sendable type '() async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-ni-note @-1 {{Passing value of non-Sendable type '() async -> ()' as a 'sending' argument to initializer 'init(name:priority:operation:)' risks causing races in between local and caller code}}
-      // expected-ni-ns-warning @-2 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races}}
+      // expected-ni-ns-warning @-2 {{sending value of non-Sendable type '@concurrent () async -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-ni-ns-note @-3 {{Passing value of non-Sendable type '@concurrent () async -> ()' as a 'sending' argument to initializer 'init(name:priority:operation:)' risks causing races in between local and caller code}}
       result = type.init()
     }
@@ -2087,7 +2087,7 @@ extension Optional where Wrapped: ~Copyable {
   mutating func takeSending() -> sending Self {
     let result = self
     self = nil
-    return result // expected-warning {{returning task-isolated 'result' as a 'sending' result risks causing data races}}
+    return result // expected-warning {{returning task-isolated 'result' as a 'sending' result risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning task-isolated 'result' risks causing data races since the caller assumes that 'result' can be safely sent to other isolation domains}}
   }
 }
@@ -2101,7 +2101,7 @@ struct IndirectAssignTests {
     mutating func takeFuncType() -> sending FuncType {
       if let v = value {
         self.value = nil
-        return v // expected-warning {{sending 'v' risks causing data races}}
+        return v // expected-warning {{sending 'v' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'v' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2121,7 +2121,7 @@ struct IndirectAssignTests {
     mutating func take() -> sending NonSendableKlass {
       if let value {
         self.value = nil
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2135,7 +2135,7 @@ struct IndirectAssignTests {
     mutating func take() -> sending T {
       if let value {
         self.value = nil
-        return value // expected-warning {{returning task-isolated 'value' as a 'sending' result risks causing data races}}
+        return value // expected-warning {{returning task-isolated 'value' as a 'sending' result risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning task-isolated 'value' risks causing data races since the caller assumes that 'value' can be safely sent to other isolation domains}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2151,7 +2151,7 @@ struct IndirectAssignTests {
         preconditionFailure("Consumed twice")
       }
       self.value = nil
-      return value // expected-warning {{sending 'value' risks causing data races}}
+      return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
     }
   }
@@ -2163,7 +2163,7 @@ struct IndirectAssignTests {
       if let value {
         self.value = nil
         // TODO: Need a better error message.
-        return value // expected-warning {{task or actor-isolated value cannot be sent}}
+        return value // expected-warning {{task or actor-isolated value cannot be sent; this is an error in the Swift 6 language mode}}
       } else {
         preconditionFailure("Consumed twice")
       }
@@ -2172,7 +2172,7 @@ struct IndirectAssignTests {
     mutating func takeFirst() -> sending NonSendableKlass {
       if let value {
         self.value = nil
-        return value.0 // expected-warning {{sending 'value.0' risks causing data races}}
+        return value.0 // expected-warning {{sending 'value.0' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'value.0' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2186,7 +2186,7 @@ struct IndirectAssignTests {
     mutating func take() -> sending NonSendableKlass {
       if let value {
         self.value = nil
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2201,7 +2201,7 @@ struct IndirectAssignTests {
     func take() -> sending NonSendableKlass {
       if let value {
         self.value = nil
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{'self'-isolated 'value' cannot be a 'sending' result. 'self'-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2215,7 +2215,7 @@ struct IndirectAssignTests {
     func take() -> sending NonSendableKlass {
       if let value {
         self.value = nil
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2230,7 +2230,7 @@ struct IndirectAssignTests {
     mutating func take() -> sending NonSendableKlass {
       if let value {
         self.value = nil
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{main actor-isolated 'value' cannot be a 'sending' result. main actor-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2244,7 +2244,7 @@ struct IndirectAssignTests {
     mutating func take() async -> sending NonSendableKlass {
       if let value {
         self.value = nil
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2258,7 +2258,7 @@ struct IndirectAssignTests {
     mutating func take() -> sending NonSendableKlass {
       if let value, let innerValue = value {
         self.value = nil
-        return innerValue // expected-warning {{sending 'innerValue' risks causing data races}}
+        return innerValue // expected-warning {{sending 'innerValue' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'innerValue' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2276,7 +2276,7 @@ struct IndirectAssignTests {
         preconditionFailure("Consumed twice")
       case .full(let value):
         self = .empty
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       }
     }
@@ -2287,7 +2287,7 @@ struct IndirectAssignTests {
 
     consuming func take() -> sending NonSendableKlass {
       if let value {
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2301,7 +2301,7 @@ struct IndirectAssignTests {
     func take() -> sending NonSendableKlass {
       if let value {
         self.value = nil
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{'self'-isolated 'value' cannot be a 'sending' result. 'self'-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")
@@ -2318,7 +2318,7 @@ struct IndirectAssignTests {
       }
       let value = values.removeFirst()
       values = []
-      return value // expected-warning {{sending 'value' risks causing data races}}
+      return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
     }
   }
@@ -2331,7 +2331,7 @@ struct IndirectAssignTests {
         preconditionFailure("Key not found")
       }
       values = [:]
-      return value // expected-warning {{sending 'value' risks causing data races}}
+      return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
     }
   }
@@ -2351,7 +2351,7 @@ struct IndirectAssignTests {
         preconditionFailure("Both consumed")
       }
       // TODO: The warning should be on the user itself.
-    } // expected-warning {{sending 'value2' risks causing data races}}
+    } // expected-warning {{sending 'value2' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{task-isolated 'value2' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
   }
 
@@ -2367,7 +2367,7 @@ struct IndirectAssignTests {
       let result = _value!
       _value = nil
       initialized = false
-      return result // expected-warning {{sending 'result' risks causing data races}}
+      return result // expected-warning {{sending 'result' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'result' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
     }
   }
@@ -2379,7 +2379,7 @@ struct IndirectAssignTests {
   static func takeFromInout(_ box: inout IndirectAssignTests.InoutBox) -> sending NonSendableKlass {
     if let value = box.value {
       box.value = nil
-      return value // expected-warning {{sending 'value' risks causing data races}}
+      return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
     } else {
       preconditionFailure("Consumed twice")
@@ -2406,7 +2406,7 @@ struct IndirectAssignTests {
     mutating func take() -> sending (any AnyObject) {
       if let value {
         self.value = nil
-        return value // expected-warning {{sending 'value' risks causing data races}}
+        return value // expected-warning {{sending 'value' risks causing data races; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{task-isolated 'value' cannot be a 'sending' result. task-isolated uses may race with caller uses}}
       } else {
         preconditionFailure("Consumed twice")

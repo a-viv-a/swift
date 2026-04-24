@@ -330,11 +330,11 @@ public struct HasUsableFromInlinePrivateSetProperty {
   // writes should trigger diagnostic
   @inlinable
   public mutating func writeDirect() {
-      self.bytes = UnsafeMutableRawPointer.allocate(byteCount: 2048, alignment: 8) // expected-warning {{setter for property 'bytes' is private and cannot be referenced from an '@inlinable' function}}
+      self.bytes = UnsafeMutableRawPointer.allocate(byteCount: 2048, alignment: 8) // expected-warning {{setter for property 'bytes' is private and cannot be referenced from an '@inlinable' function; this will be an error in a future Swift language mode}}
   }
   @inlinable
   public mutating func writeFunc() {
-    modifyPointer(&self.bytes) // expected-warning {{setter for property 'bytes' is private and cannot be referenced from an '@inlinable' function}}
+    modifyPointer(&self.bytes) // expected-warning {{setter for property 'bytes' is private and cannot be referenced from an '@inlinable' function; this will be an error in a future Swift language mode}}
   }
   // reads should be ok
   @inlinable

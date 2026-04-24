@@ -81,13 +81,13 @@ private class NonSendableLinkedListNode<T> {
 @CustomActor func useCustomActor1() async {
   let x = firstList
 
-  await transferToMainActor(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMainActor(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending global actor 'CustomActor'-isolated 'x' to main actor-isolated global function 'transferToMainActor' risks causing data races between main actor-isolated and global actor 'CustomActor'-isolated uses}}
  
 
   let y = secondList.listHead!.next!
 
-  await transferToMainActor(y) // expected-warning {{sending 'y' risks causing data races}}
+  await transferToMainActor(y) // expected-warning {{sending 'y' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending global actor 'CustomActor'-isolated 'y' to main actor-isolated global function 'transferToMainActor' risks causing data races between main actor-isolated and global actor 'CustomActor'-isolated uses}}
  
 }
@@ -99,7 +99,7 @@ private class NonSendableLinkedListNode<T> {
     x = secondList.listHead!.next!
   }
 
-  await transferToMainActor(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMainActor(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending global actor 'CustomActor'-isolated 'x' to main actor-isolated global function 'transferToMainActor' risks causing data races between main actor-isolated and global actor 'CustomActor'-isolated uses}}
  
 }
@@ -154,7 +154,7 @@ private struct StructContainingValue {
   var x = StructContainingValue()
   x.x = firstList
 
-  await transferToNonIsolated(x) // expected-ni-warning {{sending 'x' risks causing data races}}
+  await transferToNonIsolated(x) // expected-ni-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending global actor 'CustomActor'-isolated 'x' to nonisolated global function 'transferToNonIsolated' risks causing data races between nonisolated and global actor 'CustomActor'-isolated uses}}
  
 
@@ -178,7 +178,7 @@ private struct StructContainingValue {
 
   x.1 = firstList
 
-  await transferToNonIsolated(x) // expected-ni-warning {{sending 'x' risks causing data races}}
+  await transferToNonIsolated(x) // expected-ni-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending global actor 'CustomActor'-isolated 'x' to nonisolated global function 'transferToNonIsolated' risks causing data races between nonisolated and global actor 'CustomActor'-isolated uses}}
  
  
@@ -199,7 +199,7 @@ struct Clock {
 // We used to crash when inferring the type for the diagnostic below.
 @MainActor func testIndirectParametersHandledCorrectly() async {
   let c = Clock()
-  let _: Int = await c.measure { // expected-ni-warning {{sending value of non-Sendable type '() async -> Int' risks causing data races}}
+  let _: Int = await c.measure { // expected-ni-warning {{sending value of non-Sendable type '() async -> Int' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-ni-note @-1 {{sending main actor-isolated value of non-Sendable type '() async -> Int' to nonisolated instance method 'measure' risks causing races in between main actor-isolated and nonisolated uses}}
     try! await c.sleep()
   }
@@ -209,7 +209,7 @@ struct Clock {
   let ns = customActorIsolatedGlobal
 
   let _ = { @MainActor in
-    print(ns) // expected-warning {{sending 'ns' risks causing data races}}
+    print(ns) // expected-warning {{sending 'ns' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{global actor 'CustomActor'-isolated 'ns' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later global actor 'CustomActor'-isolated uses}}
    
   }
@@ -259,7 +259,7 @@ struct Clock {
 
   let erased: () -> Void = closure
 
-  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races}}
+  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending main actor-isolated 'erased' to nonisolated global function 'useValueAsync' risks causing data races between nonisolated and main actor-isolated uses}}
  
  
@@ -268,7 +268,7 @@ struct Clock {
 @MainActor func synchronousActorIsolatedFunctionError() async {
   let erased: () -> Void = mainActorFunction
 
-  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races}}
+  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending main actor-isolated 'erased' to nonisolated global function 'useValueAsync' risks causing data races between nonisolated and main actor-isolated uses}}
  
  
@@ -277,7 +277,7 @@ struct Clock {
 @MainActor func synchronousActorIsolatedGenericFunctionError<T>(_ t: T) async {
   let erased: (T) -> Void = useValueMainActor
 
-  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races}}
+  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending main actor-isolated 'erased' to nonisolated global function 'useValueAsync' risks causing data races between nonisolated and main actor-isolated uses}}
  
  
@@ -291,7 +291,7 @@ struct Clock {
   let t = Test()
   let erased: () -> Void = t.foo
 
-  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races}}
+  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending main actor-isolated 'erased' to nonisolated global function 'useValueAsync' risks causing data races between nonisolated and main actor-isolated uses}}
  
  
@@ -305,7 +305,7 @@ struct Clock {
   let t = Test()
   let erased: () -> Void = t.foo
 
-  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races}}
+  await useValueAsync(erased) // expected-ni-warning {{sending 'erased' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-ni-note @-1 {{sending main actor-isolated 'erased' to nonisolated global function 'useValueAsync' risks causing data races between nonisolated and main actor-isolated uses}}
  
  
@@ -316,7 +316,7 @@ struct Clock {
     print(mainActorIsolatedGlobal)
   }
   // Regions: [{(closure), @MainActor}]
-  await transferToCustomActor(closure) // expected-warning {{sending 'closure' risks causing data races}}
+  await transferToCustomActor(closure) // expected-warning {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending main actor-isolated 'closure' to global actor 'CustomActor'-isolated global function 'transferToCustomActor' risks causing data races between global actor 'CustomActor'-isolated and main actor-isolated uses}}
  
  
@@ -326,7 +326,7 @@ struct Clock {
   let closure = {
     mainActorFunction()
   }
-  await transferToCustomActor(closure) // expected-warning {{sending 'closure' risks causing data races}}
+  await transferToCustomActor(closure) // expected-warning {{sending 'closure' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending main actor-isolated 'closure' to global actor 'CustomActor'-isolated global function 'transferToCustomActor' risks causing data races between global actor 'CustomActor'-isolated and main actor-isolated uses}}
  
  
@@ -337,7 +337,7 @@ func localCaptureDataRace5() {
   var x = 0
   _ = x
 
-  Task.detached { @CustomActor in x = 1 } // expected-warning {{sending 'x' risks causing data races}}
+  Task.detached { @CustomActor in x = 1 } // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{'x' is captured by a global actor 'CustomActor'-isolated closure. global actor 'CustomActor'-isolated uses in closure may race against later main actor-isolated uses}}
 
   x = 2 // expected-note {{access can happen concurrently}}
@@ -389,7 +389,7 @@ class SetterAssignmentMustInferGlobalIsolationTest {
   func send() async {
     let ns = NonSendableKlass()
     nsField = ns
-    await CustomActor.shared.acceptValue(ns) // expected-warning {{sending 'ns' risks causing data races}}
+    await CustomActor.shared.acceptValue(ns) // expected-warning {{sending 'ns' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending main actor-isolated 'ns' to actor-isolated instance method 'acceptValue' risks causing data races between actor-isolated and main actor-isolated uses}}
   }
 }

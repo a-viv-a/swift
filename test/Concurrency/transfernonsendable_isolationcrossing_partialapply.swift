@@ -42,14 +42,14 @@ actor ProtectsNonSendable {
 
   nonisolated func testParameter(_ nsArg: NonSendableKlass) async {
     self.assumeIsolated { isolatedSelf in
-      isolatedSelf.ns = nsArg // expected-warning {{sending 'nsArg' risks causing data races}}
+      isolatedSelf.ns = nsArg // expected-warning {{sending 'nsArg' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'nsArg' is captured by a actor-isolated closure. actor-isolated uses in closure may race against later nonisolated uses}}
     }
   }
 
   nonisolated func testParameterOutOfLine2(_ nsArg: NonSendableKlass) async {
     let closure: (isolated ProtectsNonSendable) -> () = { isolatedSelf in
-      isolatedSelf.ns = nsArg // expected-warning {{sending 'nsArg' risks causing data races}}
+      isolatedSelf.ns = nsArg // expected-warning {{sending 'nsArg' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'nsArg' is captured by a actor-isolated closure. actor-isolated uses in closure may race against later nonisolated uses}}
     }
     self.assumeIsolated(closure)
@@ -60,7 +60,7 @@ actor ProtectsNonSendable {
     let l = NonSendableKlass()
     doSomething(l, nsArg)
     self.assumeIsolated { isolatedSelf in
-      isolatedSelf.ns = l // expected-warning {{sending 'l' risks causing data races}}
+      isolatedSelf.ns = l // expected-warning {{sending 'l' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{task-isolated 'l' is captured by a actor-isolated closure. actor-isolated uses in closure may race against later nonisolated uses}}
     }
   }
@@ -79,7 +79,7 @@ actor ProtectsNonSendable {
 
     // This is not safe since we use l later.
     self.assumeIsolated { isolatedSelf in
-      isolatedSelf.ns = l // expected-warning {{sending 'l' risks causing data races}}
+      isolatedSelf.ns = l // expected-warning {{sending 'l' risks causing data races; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{'l' is captured by a actor-isolated closure. actor-isolated uses in closure may race against later nonisolated uses}}
     }
 
@@ -97,7 +97,7 @@ func normalFunc_testLocal_1() {
 func normalFunc_testLocal_2() {
   let x = NonSendableKlass()
   let _ = { @MainActor in
-    useValue(x) // expected-warning {{sending 'x' risks causing data races}}
+    useValue(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{'x' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses}}
   }
   useValue(x) // expected-note {{access can happen concurrently}}
@@ -109,7 +109,7 @@ func normalFunc_testLocal_2() {
 // diagnostic.
 func transferBeforeCaptureErrors() async {
   let x = NonSendableKlass()
-  await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to global actor 'CustomActor'-isolated global function 'transferToCustom' risks causing data races between global actor 'CustomActor'-isolated and local nonisolated uses}}
   let _ = { @MainActor in // expected-note {{access can happen concurrently}}
     useValue(x)

@@ -28,7 +28,7 @@ struct OtherGlobalActor {
 func testConversions(f: @escaping @SomeGlobalActor (Int) -> Void, g: @escaping (Int) -> Void) {
   let _: Int = f // expected-error{{cannot convert value of type '@SomeGlobalActor (Int) -> Void' to specified type 'Int'}}
 
-  let _: (Int) -> Void = f // expected-warning {{converting function value of type '@SomeGlobalActor (Int) -> Void' to '(Int) -> Void' loses global actor 'SomeGlobalActor'}}
+  let _: (Int) -> Void = f // expected-warning {{converting function value of type '@SomeGlobalActor (Int) -> Void' to '(Int) -> Void' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
   let _: @SomeGlobalActor (Int) -> Void = g // okay
   let _: @OtherGlobalActor (Int) -> Void = f // expected-error{{cannot convert value actor-isolated to 'SomeGlobalActor' to specified type actor-isolated to 'OtherGlobalActor'}}
 }
@@ -133,12 +133,12 @@ func testTypesNonConcurrencyContext() { // expected-note{{add '@SomeGlobalActor'
   let f1 = onSomeGlobalActor // expected-note{{calls to let 'f1' from outside of its actor context are implicitly asynchronous}}
   let f2 = onSomeGlobalActorUnsafe // expected-complete-note {{calls to let 'f2' from outside of its actor context are implicitly asynchronous}}
 
-  let _: () -> Int = f1 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'}}
-  let _: () -> Int = f2 // expected-complete-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'}}
+  let _: () -> Int = f1 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
+  let _: () -> Int = f2 // expected-complete-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
 
   _ = {
-    let _: () -> Int = f1 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'}}
-    let _: () -> Int = f2 // expected-complete-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'}}
+    let _: () -> Int = f1 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
+    let _: () -> Int = f2 // expected-complete-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
   }
 
   @SomeGlobalActor func isolated() {
@@ -154,12 +154,12 @@ func testTypesConcurrencyContext() async {
   let f1 = onSomeGlobalActor
   let f2 = onSomeGlobalActorUnsafe
 
-  let _: () -> Int = f1 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'}}
-  let _: () -> Int = f2 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'}}
+  let _: () -> Int = f1 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
+  let _: () -> Int = f2 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
 
   _ = {
-    let _: () -> Int = f1 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'}}
-    let _: () -> Int = f2 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'}}
+    let _: () -> Int = f1 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
+    let _: () -> Int = f2 // expected-warning {{converting function value of type '@SomeGlobalActor () -> Int' to '() -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
   }
 
   let _: @SomeGlobalActor () -> () = {
@@ -219,7 +219,7 @@ func noActor(_ unit: () -> ()) { unit() }
   // ok if you drop both sendable and the actor
   noActor(sendable)
   let _: () -> () = sendable
-  let _: @Sendable () -> () = sendable // expected-warning {{converting function value of type '@SomeGlobalActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'SomeGlobalActor'}}
+  let _: @Sendable () -> () = sendable // expected-warning {{converting function value of type '@SomeGlobalActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
 
   _ = {
     someGlobalActorFn()
@@ -236,7 +236,7 @@ func noActor(_ unit: () -> ()) { unit() }
 
 actor A {
   func illegal(_ stillIllegal: @MainActor () -> ()) {
-    noActor(stillIllegal) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+    noActor(stillIllegal) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
   }
 
   func sendAndDrop(_ g: @escaping @Sendable @MainActor () -> ()) async {
@@ -246,11 +246,11 @@ actor A {
     }
 
     _ = Task {
-      noActor(g) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+      noActor(g) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
     }
 
     _ = Task.detached {
-      noActor(g) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+      noActor(g) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
     }
   }
 }
@@ -258,29 +258,29 @@ actor A {
 @MainActor func uhoh(_ f: @escaping @MainActor () -> (), _ sendableF: @escaping @Sendable @MainActor () -> ()) {
 
   let _: () async -> () = f
-  let _: @Sendable () -> () = sendableF // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'MainActor'}}
+  let _: @Sendable () -> () = sendableF // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
 
   let _: () -> () = {
     noActor(f)
   }
 
   _ = { @Sendable in
-    noActor(mainActorFn) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+    noActor(mainActorFn) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
   }
 
   func local() {
     noActor(f)
     noActor(sendableF)
     let _: () -> () = mainActorFn
-    let _: @Sendable () -> () = sendableF // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'MainActor'}}
+    let _: @Sendable () -> () = sendableF // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
   }
 
   _ = {
     func localNested() {
-      noActor(f) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
-      noActor(sendableF) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'}}
-      let _: () -> () = mainActorFn // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
-      let _: @Sendable () -> () = sendableF // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'MainActor'}}
+      noActor(f) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
+      noActor(sendableF) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
+      let _: () -> () = mainActorFn // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
+      let _: @Sendable () -> () = sendableF // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
     }
   }
 
@@ -288,12 +288,12 @@ actor A {
     noActor(f)
     noActor(sendableF)
     let _: () -> () = mainActorFn
-    let _: @Sendable () -> () = sendableF // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'MainActor'}}
+    let _: @Sendable () -> () = sendableF // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '@Sendable () -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
   }
 
   @Sendable func localSendable() {
-    noActor(sendableF) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'}}
-    let _: () -> () = mainActorFn // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+    noActor(sendableF) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
+    let _: () -> () = mainActorFn // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
   }
 
   let _: () -> () = {
@@ -312,8 +312,8 @@ actor A {
   }
 
   let _: @SomeGlobalActor () -> () = {
-    noActor(sendableF) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'}}
-    let _: () -> () = mainActorFn // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+    noActor(sendableF) // expected-warning {{converting function value of type '@MainActor @Sendable () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
+    let _: () -> () = mainActorFn // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
   }
 }
 
@@ -324,7 +324,7 @@ func stripActor(_ expr: @Sendable @autoclosure () -> (() -> ())) async {
 
 // NOTE: this warning is correct, but is only being caught by TypeCheckConcurrency's extra check.
 @MainActor func exampleWhereConstraintSolverHasWrongDeclContext_v1() async {
-  return await stripActor(mainActorFn) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+  return await stripActor(mainActorFn) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
 }
 
 // We used to not emit an error here with strict-concurrency enabled since we
@@ -332,7 +332,7 @@ func stripActor(_ expr: @Sendable @autoclosure () -> (() -> ())) async {
 // now always treat async let as non-isolated, so we get the same error in all
 // contexts.
 @MainActor func exampleWhereConstraintSolverHasWrongDeclContext_v2() async -> Int {
-  async let a: () = noActor(mainActorFn) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+  async let a: () = noActor(mainActorFn) // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
   await a
 }
 
@@ -343,7 +343,7 @@ class SubClass: MAIsolatedParent {
   }
 
   nonisolated func exemptMethod() {
-    let _: () -> () = mainActorFn // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'}}
+    let _: () -> () = mainActorFn // expected-warning {{converting function value of type '@MainActor () -> ()' to '() -> ()' loses global actor 'MainActor'; this is an error in the Swift 6 language mode}}
   }
 }
 

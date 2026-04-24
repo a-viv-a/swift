@@ -116,8 +116,8 @@ func checkAsyncPropertyAccess() async {
   act.text[0] += "hello" // expected-error{{actor-isolated property 'text' can not be mutated from a nonisolated context}}
   // expected-note@-1{{consider declaring an isolated method on 'MyActor' to perform the mutation}}
 
-  _ = act.point  // expected-warning{{non-Sendable type 'Point' of property 'point' cannot exit actor-isolated context}}
-  // expected-warning@-1 {{actor-isolated property 'point' cannot be accessed from outside of the actor}} {{7-7=await }}
+  _ = act.point  // expected-warning{{non-Sendable type 'Point' of property 'point' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
+  // expected-warning@-1 {{actor-isolated property 'point' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{7-7=await }}
 }
 
 /// ------------------------------------------------------------------
@@ -155,20 +155,20 @@ func checkIsolationValueType(_ formance: InferredFromConformance,
                              _ ext: InferredFromContext,
                              _ anno: NoGlobalActorValueType) async {
   // these still do need an await in Swift 5
-  _ = await ext.point // expected-warning {{non-Sendable type 'Point' of property 'point' cannot exit main actor-isolated context}}
-  _ = await anno.point // expected-warning {{non-Sendable type 'Point' of property 'point' cannot exit global actor 'SomeGlobalActor'-isolated context}}
-  // expected-warning@-1 {{non-Sendable type 'NoGlobalActorValueType' cannot be sent into global actor 'SomeGlobalActor'-isolated context in call to property 'point'}}
+  _ = await ext.point // expected-warning {{non-Sendable type 'Point' of property 'point' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode}}
+  _ = await anno.point // expected-warning {{non-Sendable type 'Point' of property 'point' cannot exit global actor 'SomeGlobalActor'-isolated context; this is an error in the Swift 6 language mode}}
+  // expected-warning@-1 {{non-Sendable type 'NoGlobalActorValueType' cannot be sent into global actor 'SomeGlobalActor'-isolated context in call to property 'point'; this is an error in the Swift 6 language mode}}
 
   _ = formance.counter
   _ = anno.counter
 
   // these will always need an await
-  _ = await (formance as MainCounter).counter // expected-warning {{non-Sendable type 'any MainCounter' cannot be sent into main actor-isolated context in call to property 'counter'}}
+  _ = await (formance as MainCounter).counter // expected-warning {{non-Sendable type 'any MainCounter' cannot be sent into main actor-isolated context in call to property 'counter'; this is an error in the Swift 6 language mode}}
   _ = await ext[1]
   _ = await formance.ticker
-  _ = await ext.polygon // expected-warning {{non-Sendable type '[Point]' of property 'polygon' cannot exit main actor-isolated context}}
+  _ = await ext.polygon // expected-warning {{non-Sendable type '[Point]' of property 'polygon' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode}}
   _ = await InferredFromContext.stuff
-  _ = await NoGlobalActorValueType.polygon // expected-warning {{non-Sendable type '[Point]' of static property 'polygon' cannot exit main actor-isolated context}}
+  _ = await NoGlobalActorValueType.polygon // expected-warning {{non-Sendable type '[Point]' of static property 'polygon' cannot exit main actor-isolated context; this is an error in the Swift 6 language mode}}
 }
 
 // expected-warning@+2 {{memberwise initializer for 'NoGlobalActorValueType' cannot be both nonisolated and global actor 'SomeGlobalActor'-isolated; this is an error in the Swift 6 language mode}}
@@ -223,7 +223,7 @@ extension MyActor {
 
     // Global data is okay if it is immutable.
     _ = immutableGlobal
-    _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state}}
+    _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode}}
 
     // Partial application
     _ = synchronous  // expected-error{{actor-isolated instance method 'synchronous()' can not be partially applied}}
@@ -290,7 +290,7 @@ extension MyActor {
 
     // Global data is okay if it is immutable.
     _ = immutableGlobal
-    _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state}}
+    _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode}}
 
     // Global functions are not actually safe, but we allow them for now.
     globalFunc()
@@ -329,8 +329,8 @@ extension MyActor {
       acceptInout(&self.mutable) // expected-error{{actor-isolated property 'mutable' can not be used 'inout' from a Sendable closure}}
       _ = self.immutable
       _ = self.synchronous() // expected-error{{call to actor-isolated instance method 'synchronous()' in a synchronous nonisolated context}}
-      _ = localVar // expected-warning{{reference to captured var 'localVar' in concurrently-executing code}}
-      localVar = 25 // expected-warning{{mutation of captured var 'localVar' in concurrently-executing code}}
+      _ = localVar // expected-warning{{reference to captured var 'localVar' in concurrently-executing code; this is an error in the Swift 6 language mode}}
+      localVar = 25 // expected-warning{{mutation of captured var 'localVar' in concurrently-executing code; this is an error in the Swift 6 language mode}}
       _ = localConstant
 
       _ = otherLocalVar
@@ -361,8 +361,8 @@ extension MyActor {
     @Sendable func localFn1() {
       _ = self.text[0] // expected-error{{actor-isolated property 'text' can not be referenced from a Sendable function}}
       _ = self.synchronous() // expected-error{{call to actor-isolated instance method 'synchronous()' in a synchronous nonisolated context}}
-      _ = localVar // expected-warning{{reference to captured var 'localVar' in concurrently-executing code}}
-      localVar = 25 // expected-warning{{mutation of captured var 'localVar' in concurrently-executing code}}
+      _ = localVar // expected-warning{{reference to captured var 'localVar' in concurrently-executing code; this is an error in the Swift 6 language mode}}
+      localVar = 25 // expected-warning{{mutation of captured var 'localVar' in concurrently-executing code; this is an error in the Swift 6 language mode}}
       _ = localConstant
     }
 
@@ -370,8 +370,8 @@ extension MyActor {
       acceptClosure {
         _ = text[0]  // expected-error{{actor-isolated property 'text' can not be referenced from a nonisolated context}}
         _ = self.synchronous() // expected-error{{call to actor-isolated instance method 'synchronous()' in a synchronous nonisolated context}}
-        _ = localVar // expected-warning{{reference to captured var 'localVar' in concurrently-executing code}}
-        localVar = 25 // expected-warning{{mutation of captured var 'localVar' in concurrently-executing code}}
+        _ = localVar // expected-warning{{reference to captured var 'localVar' in concurrently-executing code; this is an error in the Swift 6 language mode}}
+        localVar = 25 // expected-warning{{mutation of captured var 'localVar' in concurrently-executing code; this is an error in the Swift 6 language mode}}
         _ = localConstant
       }
     }
@@ -486,7 +486,7 @@ func testGlobalActorClosures() {
     return 17
   }
 
-  acceptConcurrentClosure { @SomeGlobalActor in 5 } // expected-warning {{converting function value of type '@SomeGlobalActor @Sendable () -> Int' to '@Sendable () -> Int' loses global actor 'SomeGlobalActor'}}
+  acceptConcurrentClosure { @SomeGlobalActor in 5 } // expected-warning {{converting function value of type '@SomeGlobalActor @Sendable () -> Int' to '@Sendable () -> Int' loses global actor 'SomeGlobalActor'; this is an error in the Swift 6 language mode}}
 
   @MainActor func test() async {
     let closure = { @MainActor @Sendable in
@@ -634,14 +634,14 @@ func testGlobalRestrictions(actor: MyActor) async {
   MyActor.synchronousClass()
 
   // Global mutable state cannot be accessed.
-  _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state}}
+  _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode}}
 
   // Local mutable variables cannot be accessed from concurrently-executing
   // code.
   var i = 17
   acceptConcurrentClosure {
-    _ = i // expected-warning{{reference to captured var 'i' in concurrently-executing code}}
-    i = 42 // expected-warning{{mutation of captured var 'i' in concurrently-executing code}}
+    _ = i // expected-warning{{reference to captured var 'i' in concurrently-executing code; this is an error in the Swift 6 language mode}}
+    i = 42 // expected-warning{{mutation of captured var 'i' in concurrently-executing code; this is an error in the Swift 6 language mode}}
   }
   print(i)
 
@@ -656,11 +656,11 @@ func testGlobalRestrictions(actor: MyActor) async {
 @available(SwiftStdlib 5.1, *)
 func f() {
   acceptConcurrentClosure {
-    _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state}}
+    _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode}}
   }
 
   @Sendable func g() {
-    _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state}}
+    _ = mutableGlobal // expected-warning{{reference to var 'mutableGlobal' is not concurrency-safe because it involves shared mutable state; this is an error in the Swift 6 language mode}}
   }
 }
 
@@ -705,7 +705,7 @@ func checkLocalFunctions() async {
     i = 17
   }
 
-  func local2() { // expected-warning{{concurrently-executed local function 'local2()' must be marked as '@Sendable'}}{{3-3=@Sendable }}
+  func local2() { // expected-warning{{concurrently-executed local function 'local2()' must be marked as '@Sendable'; this is an error in the Swift 6 language mode}}{{3-3=@Sendable }}
     j = 42
   }
 
@@ -721,7 +721,7 @@ func checkLocalFunctions() async {
 
   // Escaping closures can make the local function execute concurrently.
   acceptConcurrentClosure {
-    local2() // expected-warning{{capture of 'local2()' with non-Sendable type '() -> ()' in a '@Sendable' closure}}
+    local2() // expected-warning{{capture of 'local2()' with non-Sendable type '() -> ()' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
     // expected-note@-1{{a function type must be marked '@Sendable' to conform to 'Sendable'}}
   }
 
@@ -731,13 +731,13 @@ func checkLocalFunctions() async {
   var k = 17
   func local4() {
     acceptConcurrentClosure {
-      local3() // expected-warning{{capture of 'local3()' with non-Sendable type '() -> ()' in a '@Sendable' closure}}
+      local3() // expected-warning{{capture of 'local3()' with non-Sendable type '() -> ()' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
       // expected-note@-1{{a function type must be marked '@Sendable' to conform to 'Sendable'}}
     }
   }
 
-  func local3() { // expected-warning{{concurrently-executed local function 'local3()' must be marked as '@Sendable'}}
-    k = 25 // expected-warning{{mutation of captured var 'k' in concurrently-executing code}}
+  func local3() { // expected-warning{{concurrently-executed local function 'local3()' must be marked as '@Sendable'; this is an error in the Swift 6 language mode}}
+    k = 25 // expected-warning{{mutation of captured var 'k' in concurrently-executing code; this is an error in the Swift 6 language mode}}
   }
 
   print(k)
@@ -1051,8 +1051,8 @@ func testCrossModuleLets(actor: OtherModuleActor) async {
   _ = await actor.a   // okay
   _ = actor.b         // okay
   _ = actor.c // expected-error{{actor-isolated property 'c' cannot be accessed from outside of the actor}} {{7-7=await }}
-  // expected-warning@-1{{non-Sendable type 'SomeClass' of property 'c' cannot exit actor-isolated context}}
-  _ = await actor.c // expected-warning{{non-Sendable type 'SomeClass' of property 'c' cannot exit actor-isolated context}}
+  // expected-warning@-1{{non-Sendable type 'SomeClass' of property 'c' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
+  _ = await actor.c // expected-warning{{non-Sendable type 'SomeClass' of property 'c' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
   _ = await actor.d // okay
 }
 
@@ -1085,8 +1085,8 @@ actor CrossModuleFromInitsActor {
     _ = await actor.a   // okay
     _ = actor.b         // okay
     _ = actor.c // expected-error{{actor-isolated property 'c' cannot be accessed from outside of the actor}} {{9-9=await }}
-    // expected-warning@-1{{non-Sendable type 'SomeClass' of property 'c' cannot exit actor-isolated context}}
-    _ = await actor.c // expected-warning{{non-Sendable type 'SomeClass' of property 'c' cannot exit actor-isolated context}}
+    // expected-warning@-1{{non-Sendable type 'SomeClass' of property 'c' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
+    _ = await actor.c // expected-warning{{non-Sendable type 'SomeClass' of property 'c' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
     _ = await actor.d // okay
   }
 }
@@ -1190,12 +1190,12 @@ extension MyActor {
     acceptAsyncSendableClosure {
       _ = synchronous() // expected-error{{actor-isolated instance method 'synchronous()' cannot be called from outside of the actor}} {{11-11=await }}
 
-      counter += 1 // expected-warning{{mutation of captured var 'counter' in concurrently-executing code}}
+      counter += 1 // expected-warning{{mutation of captured var 'counter' in concurrently-executing code; this is an error in the Swift 6 language mode}}
     }
 
     acceptAsyncSendableClosure {
       _ = await synchronous() // ok
-      counter += 1 // expected-warning{{mutation of captured var 'counter' in concurrently-executing code}}
+      counter += 1 // expected-warning{{mutation of captured var 'counter' in concurrently-executing code; this is an error in the Swift 6 language mode}}
     }
 
     acceptAsyncSendableClosureInheriting {
@@ -1220,7 +1220,7 @@ func testGlobalActorInheritance() {
   var counter = 0
 
   acceptAsyncSendableClosure {
-    counter += 1 // expected-warning{{mutation of captured var 'counter' in concurrently-executing code}}
+    counter += 1 // expected-warning{{mutation of captured var 'counter' in concurrently-executing code; this is an error in the Swift 6 language mode}}
   }
 
   acceptAsyncSendableClosure { @SomeGlobalActor in
@@ -1240,7 +1240,7 @@ func testGlobalActorInheritance() {
 @available(SwiftStdlib 5.1, *)
 func testIsolatedParameter1(_: isolated any Actor, v: inout Int) {
   acceptAsyncSendableClosureInheriting {
-    v += 1 // expected-warning {{mutable capture of 'inout' parameter 'v' is not allowed in concurrently-executing code}}
+    v += 1 // expected-warning {{mutable capture of 'inout' parameter 'v' is not allowed in concurrently-executing code; this is an error in the Swift 6 language mode}}
   }
 
   acceptAsyncSendableClosureInheritingAlways {
@@ -1251,7 +1251,7 @@ func testIsolatedParameter1(_: isolated any Actor, v: inout Int) {
 @available(SwiftStdlib 5.1, *)
 func testIsolatedParameter2(_: isolated (any Actor)? = #isolation, v: inout Int) {
   acceptAsyncSendableClosureInheriting {
-    v += 1 // expected-warning {{mutable capture of 'inout' parameter 'v' is not allowed in concurrently-executing code}}
+    v += 1 // expected-warning {{mutable capture of 'inout' parameter 'v' is not allowed in concurrently-executing code; this is an error in the Swift 6 language mode}}
   }
 
   acceptAsyncSendableClosureInheritingAlways {
@@ -1484,7 +1484,7 @@ final class Exponentiator: Sendable {
   }()
 
   // expected-warning@+2 {{stored property 'cubed' of 'Sendable'-conforming class 'Exponentiator' is mutable; this is an error in the Swift 6 language mode}}
-  // expected-warning@+1 {{main actor-isolated default value in a nonisolated context}}
+  // expected-warning@+1 {{main actor-isolated default value in a nonisolated context; this is an error in the Swift 6 language mode}}
   lazy var cubed: [Int] = {
     zip(squared, numbers).map { $0 * $1 }
   }()
@@ -1544,7 +1544,7 @@ protocol SGA_Proto {
 }
 
 // try to override a MA method with inferred isolation from a protocol requirement
-// expected-warning@+1{{conformance of 'SGA_MA' to protocol 'SGA_Proto' involves isolation mismatches and can cause data races}}
+// expected-warning@+1{{conformance of 'SGA_MA' to protocol 'SGA_Proto' involves isolation mismatches and can cause data races; this is an error in the Swift 6 language mode}}
 class SGA_MA: MA, SGA_Proto {
   // expected-note@-1{{turn data races into runtime errors with '@preconcurrency'}}
 
@@ -1656,7 +1656,7 @@ protocol NonisolatedProtocol {
   var ns: NonSendable { get }
 }
 
-// expected-warning@+1{{conformance of 'ActorWithNonSendableLet' to protocol 'NonisolatedProtocol' crosses into actor-isolated code and can cause data races}}
+// expected-warning@+1{{conformance of 'ActorWithNonSendableLet' to protocol 'NonisolatedProtocol' crosses into actor-isolated code and can cause data races; this is an error in the Swift 6 language mode}}
 actor ActorWithNonSendableLet: NonisolatedProtocol {
   // expected-note@-1{{turn data races into runtime errors with '@preconcurrency'}}{{32-32=@preconcurrency }}
 
@@ -1682,8 +1682,8 @@ class ReferenceActor {
   init() async {
     self.a = ProtectNonSendable()
 
-    // expected-warning@+2 {{non-Sendable type 'NonSendable' of property 'ns' cannot exit actor-isolated context}}
-    // expected-warning@+1 {{actor-isolated property 'ns' cannot be accessed from outside of the actor}} {{9-9=await }}
+    // expected-warning@+2 {{non-Sendable type 'NonSendable' of property 'ns' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
+    // expected-warning@+1 {{actor-isolated property 'ns' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{9-9=await }}
     _ = a.ns
   }
 }
@@ -1694,7 +1694,7 @@ actor AnotherActor {
   init() {
     self.a = ProtectNonSendable()
 
-    // expected-warning@+1 {{actor-isolated property 'ns' can not be referenced from a nonisolated context}}
+    // expected-warning@+1 {{actor-isolated property 'ns' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode}}
     _ = a.ns
   }
 }

@@ -146,8 +146,7 @@ actor ActorWithSetter {
   func recursive() async {
     let x = NonSendableKlass()
     await self.recursive!.twoFieldBoxInTuple.1.k2 = x
-    // expected-warning @-1 {{non-Sendable type '(NonSendableKlass, TwoFieldKlassBox)' of property 'twoFieldBoxInTuple' cannot exit actor-isolated context}}
-    // expected-warning @-2 {{non-Sendable type '(NonSendableKlass, TwoFieldKlassBox)' of property 'twoFieldBoxInTuple' cannot exit actor-isolated context}}
+    // expected-warning @-1 2{{non-Sendable type '(NonSendableKlass, TwoFieldKlassBox)' of property 'twoFieldBoxInTuple' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
 
     await transferToMain(x) // xpected-tns-warning {{call site passes `self` or a non-Sendable argument of this function to another thread, potentially yielding a race with the caller}}
     // expected-complete-warning @-1 {{passing argument of non-Sendable type 'NonSendableKlass' into main actor-isolated context may introduce data races}}
@@ -165,8 +164,7 @@ final actor FinalActorWithSetter {
   func recursive() async {
     let x = NonSendableKlass()
     await self.recursive!.twoFieldBoxInTuple.1.k2 = x
-    // expected-warning @-1 {{non-Sendable type '(NonSendableKlass, TwoFieldKlassBox)' of property 'twoFieldBoxInTuple' cannot exit actor-isolated context}}
-    // expected-warning @-2 {{non-Sendable type '(NonSendableKlass, TwoFieldKlassBox)' of property 'twoFieldBoxInTuple' cannot exit actor-isolated context}}
+    // expected-warning @-1 2{{non-Sendable type '(NonSendableKlass, TwoFieldKlassBox)' of property 'twoFieldBoxInTuple' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
 
     await transferToMain(x) // xpected-tns-warning {{call site passes `self` or a non-Sendable argument of this function to another thread, potentially yielding a race with the caller}}
     // expected-complete-warning @-1 {{passing argument of non-Sendable type 'NonSendableKlass' into main actor-isolated context may introduce data races}}

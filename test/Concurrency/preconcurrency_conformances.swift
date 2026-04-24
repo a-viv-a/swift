@@ -103,7 +103,7 @@ final class K : @preconcurrency Initializable {
   init() {} // Ok
 }
 
-// expected-warning@+2{{conformance of 'MainActorK' to protocol 'Initializable' crosses into main actor-isolated code and can cause data races}}
+// expected-warning@+2{{conformance of 'MainActorK' to protocol 'Initializable' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode}}
 @MainActor
 final class MainActorK: Initializable {
   // expected-note@-1{{turn data races into runtime errors with '@preconcurrency'}}{{25-25=@preconcurrency }}
@@ -136,7 +136,7 @@ protocol WithIndividuallyIsolatedRequirements {
 }
 
 do {
-  // expected-warning@+2{{conformance of 'TestExplicitGlobalActorAttrs' to protocol 'WithIndividuallyIsolatedRequirements' involves isolation mismatches and can cause data races}}
+  // expected-warning@+2{{conformance of 'TestExplicitGlobalActorAttrs' to protocol 'WithIndividuallyIsolatedRequirements' involves isolation mismatches and can cause data races; this is an error in the Swift 6 language mode}}
   @MainActor
   struct TestExplicitGlobalActorAttrs : @preconcurrency WithIndividuallyIsolatedRequirements {
     // expected-warning@-1 {{'@preconcurrency' on conformance to 'WithIndividuallyIsolatedRequirements' has no effect}}
@@ -162,7 +162,7 @@ protocol WithNonIsolated {
 }
 
 do {
-  // expected-warning@+1{{conformance of 'TestExplicitOtherIsolation' to protocol 'WithNonIsolated' involves isolation mismatches and can cause data races}}
+  // expected-warning@+1{{conformance of 'TestExplicitOtherIsolation' to protocol 'WithNonIsolated' involves isolation mismatches and can cause data races; this is an error in the Swift 6 language mode}}
   class TestExplicitOtherIsolation : @preconcurrency WithNonIsolated {
     // expected-warning@-1 {{'@preconcurrency' on conformance to 'WithNonIsolated' has no effect}}{{38-54=}}
 
@@ -232,7 +232,7 @@ do {
   // Explicit conformances to inherited protocols do not contribute to whether
   // preconcurrency has effect on the conformance to the refined protocol, so
   // preconcurrency has no effect here.
-  // expected-warning@+1{{conformance of 'S4' to protocol 'P2' crosses into main actor-isolated code and can cause data races}}
+  // expected-warning@+1{{conformance of 'S4' to protocol 'P2' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode}}
   @MainActor struct S4: @preconcurrency P3, P2 {
     // expected-warning@-1:21 {{'@preconcurrency' on conformance to 'P3' has no effect}}
     // expected-note@-2:45 {{turn data races into runtime errors with '@preconcurrency'}}
@@ -302,7 +302,7 @@ do {
     func foo() {}
   }
 
-  // expected-warning@+1{{conformance of 'S4' to protocol 'P2' crosses into main actor-isolated code and can cause data races}}
+  // expected-warning@+1{{conformance of 'S4' to protocol 'P2' crosses into main actor-isolated code and can cause data races; this is an error in the Swift 6 language mode}}
   @MainActor struct S4: P6, @preconcurrency P5 {
     // expected-warning@-1:21 {{'@preconcurrency' on conformance to 'P5' has no effect}}
     // expected-note@-2{{turn data races into runtime errors with '@preconcurrency'}}

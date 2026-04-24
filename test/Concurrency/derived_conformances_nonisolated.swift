@@ -30,7 +30,7 @@ extension NonSendable: Equatable {
   }
 }
 
-// expected-warning@+3 2{{main actor-isolated property 'x' can not be referenced from a nonisolated context}}
+// expected-warning@+3 2{{main actor-isolated property 'x' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode}}
 // expected-note@+2 2{{in static method '==' for derived conformance to 'Equatable'}}
 @MainActor
 struct X2NonSendable: Equatable {

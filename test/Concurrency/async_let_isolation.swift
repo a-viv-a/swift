@@ -24,7 +24,7 @@ actor MyActor {
 
     var localText = text
 
-    async let w = localText.removeLast() // expected-without-transferring-warning {{mutation of captured var 'localText' in concurrently-executing code}}
+    async let w = localText.removeLast() // expected-without-transferring-warning {{mutation of captured var 'localText' in concurrently-executing code; this is an error in the Swift 6 language mode}}
 
     _ = await x
     _ = await y
@@ -39,7 +39,7 @@ final class MyFinalActor {
 
   func testAsyncLetIsolation() async {
     var localText = text
-    async let w = localText.removeLast() // expected-without-transferring-warning {{mutation of captured var 'localText' in concurrently-executing code}}
+    async let w = localText.removeLast() // expected-without-transferring-warning {{mutation of captured var 'localText' in concurrently-executing code; this is an error in the Swift 6 language mode}}
 
     _ = await w
 

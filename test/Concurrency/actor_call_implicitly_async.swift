@@ -176,11 +176,11 @@ func someAsyncFunc() async {
   ////////////
   // effectful properties from outside the actor instance
 
-  // expected-warning@+2 {{non-Sendable type 'Box' of property 'effPropA' cannot exit actor-isolated context}}
+  // expected-warning@+2 {{non-Sendable type 'Box' of property 'effPropA' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
   // expected-error@+1{{actor-isolated property 'effPropA' cannot be accessed from outside of the actor}} {{7-7=await }}
   _ = a.effPropA
 
-  // expected-warning@+3 {{non-Sendable type 'Box' of property 'effPropT' cannot exit actor-isolated context}}
+  // expected-warning@+3 {{non-Sendable type 'Box' of property 'effPropT' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
   // expected-error@+2{{property access can throw, but it is not marked with 'try' and the error is not handled}}
   // expected-error@+1{{actor-isolated property 'effPropT' cannot be accessed from outside of the actor}} {{7-7=await }}
   _ = a.effPropT
@@ -190,8 +190,8 @@ func someAsyncFunc() async {
   _ = a.effPropAT
 
   // (mostly) corrected ones
-  _ = await a.effPropA  // expected-warning {{non-Sendable type 'Box' of property 'effPropA' cannot exit actor-isolated context}}
-  _ = try! await a.effPropT // expected-warning {{non-Sendable type 'Box' of property 'effPropT' cannot exit actor-isolated context}}
+  _ = await a.effPropA  // expected-warning {{non-Sendable type 'Box' of property 'effPropA' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
+  _ = try! await a.effPropT // expected-warning {{non-Sendable type 'Box' of property 'effPropT' cannot exit actor-isolated context; this is an error in the Swift 6 language mode}}
   _ = try? await a.effPropAT
 
   print("ok!")
@@ -298,7 +298,7 @@ func blender(_ peeler : () -> Void) {
   await (((wisk)))((wisk)((wisk)(1)))
 
   blender((peelBanana))
-  // expected-warning@-1 {{converting function value of type '@BananaActor @Sendable () -> ()' to '() -> Void' loses global actor 'BananaActor'}}
+  // expected-warning@-1 {{converting function value of type '@BananaActor @Sendable () -> ()' to '() -> Void' loses global actor 'BananaActor'; this is an error in the Swift 6 language mode}}
 
   await wisk(peelBanana)
 

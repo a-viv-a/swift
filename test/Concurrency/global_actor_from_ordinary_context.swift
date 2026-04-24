@@ -152,7 +152,7 @@ class Sub: Super {
 
   func g2() {
     Task.detached {
-      self.f() // expected-warning{{global actor 'SomeGlobalActor'-isolated instance method 'f()' cannot be called from outside of the actor}} {{7-7=await }}
+      self.f() // expected-warning{{global actor 'SomeGlobalActor'-isolated instance method 'f()' cannot be called from outside of the actor; this is an error in the Swift 6 language mode}} {{7-7=await }}
     }
   }
 }

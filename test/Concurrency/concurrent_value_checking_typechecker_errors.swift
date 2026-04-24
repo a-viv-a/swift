@@ -40,20 +40,20 @@ enum E {
 }
 
 func globalTest() async {
-  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated let 'globalValue' cannot be accessed from outside of the actor}} {{11-11=await }}
-  let a = globalValue // expected-warning{{non-Sendable type 'NotConcurrent?' of let 'globalValue' cannot exit global actor 'SomeGlobalActor'-isolated context}}
+  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated let 'globalValue' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{11-11=await }}
+  let a = globalValue // expected-warning{{non-Sendable type 'NotConcurrent?' of let 'globalValue' cannot exit global actor 'SomeGlobalActor'-isolated context; this is an error in the Swift 6 language mode}}
   await globalAsync(a)
   await globalSync(a)
 
-  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated static property 'notSafe' cannot be accessed from outside of the actor}} {{11-11=await }}
-  let _ = E.notSafe // expected-warning{{non-Sendable type 'NotConcurrent?' of static property 'notSafe' cannot exit global actor 'SomeGlobalActor'-isolated context}}
+  // expected-warning@+1 {{global actor 'SomeGlobalActor'-isolated static property 'notSafe' cannot be accessed from outside of the actor; this is an error in the Swift 6 language mode}} {{11-11=await }}
+  let _ = E.notSafe // expected-warning{{non-Sendable type 'NotConcurrent?' of static property 'notSafe' cannot exit global actor 'SomeGlobalActor'-isolated context; this is an error in the Swift 6 language mode}}
 
   // expected-error@+3 {{expression is 'async' but is not marked with 'await'}}
   // expected-note@+2 {{call is 'async'}}
   // expected-note@+1 {{property access is 'async'}}
   globalAsync(E.notSafe)
 
-  // expected-warning@-2 {{non-Sendable type 'NotConcurrent?' of static property 'notSafe' cannot exit global actor 'SomeGlobalActor'-isolated context}}
+  // expected-warning@-2 {{non-Sendable type 'NotConcurrent?' of static property 'notSafe' cannot exit global actor 'SomeGlobalActor'-isolated context; this is an error in the Swift 6 language mode}}
 }
 
 class C11 { }

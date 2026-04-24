@@ -90,5 +90,5 @@ public struct Test2: Sendable {
   }
 
   package var storage: Storage
-  // expected-warning@-1 {{stored property 'storage' of 'Sendable'-conforming struct 'Test2' has non-Sendable type 'Test2.Storage'}}
+  // expected-warning@-1 {{stored property 'storage' of 'Sendable'-conforming struct 'Test2' has non-Sendable type 'Test2.Storage'; this is an error in the Swift 6 language mode}}
 }

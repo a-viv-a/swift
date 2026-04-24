@@ -111,10 +111,10 @@ struct SomeStruct {
   @MainActor init(asyncMainActor: Int) async {}
   @MainActor init(mainActor: Int) {} // expected-note {{calls to initializer 'init(mainActor:)' from outside of its actor context are implicitly asynchronous}}
 
-  // expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+  // expected-warning@+1 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
   @MainActor(unsafe) init(asyncMainActorUnsafe: Int) async {}
 
-  // expected-warning@+2 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead}}
+  // expected-warning@+2 {{'(unsafe)' global actors are deprecated; use '@preconcurrency' instead; this is an error in the Swift 6 language mode}}
   // expected-complete-note@+1 {{calls to initializer 'init(mainActorUnsafe:)' from outside of its actor context are implicitly asynchronous}}
   @MainActor(unsafe) init(mainActorUnsafe: Int) {}
 }
@@ -156,7 +156,7 @@ struct Location {
 }
 
 protocol DefaultConstructable {
-  init() // expected-note {{protocol requires initializer 'init()' with type '()'}} 
+  init() // expected-note {{protocol requires initializer 'init()' with type '()'}}
 }
 extension Location: DefaultConstructable {} // expected-error {{type 'Location' does not conform to protocol 'DefaultConstructable'}} expected-note {{add stubs for conformance}} {{43-43=\n    init() {\n        <#code#>\n    \}\n}}
 

@@ -88,7 +88,7 @@ func testPreconcurrencyExplicitlyNonSendable() async {
   let x = PreCUncheckedExplicitlyNonSendableKlass()
   transferArg(x)
 
-  // expected-swift-5-warning @-2 {{sending 'x' risks causing data races}}
+  // expected-swift-5-warning @-2 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-3 {{'x' used after being passed as a 'sending' parameter; Later uses could race}}
   // expected-swift-6-warning @-4 {{sending 'x' risks causing data races}}
   // expected-swift-6-note @-5 {{'x' used after being passed as a 'sending' parameter; Later uses could race}}
@@ -101,7 +101,7 @@ func testPreconcurrencyExplicitlyNonSendable() async {
 func testNormal() async {
   let x = PostCUncheckedNonSendableKlass()
   transferArg(x)
-  // expected-swift-5-warning @-1 {{sending 'x' risks causing data races}}
+  // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-6-error @-2 {{sending 'x' risks causing data races}}
   // expected-swift-5-note @-3 {{'x' used after being passed as a 'sending' parameter; Later uses could race}}
   // expected-swift-6-note @-4 {{'x' used after being passed as a 'sending' parameter; Later uses could race}}
@@ -136,7 +136,7 @@ func testNeverTransfer(_ x: PreCUncheckedNonSendableKlass) async {
 
 func testNeverTransferExplicit(_ x: PreCUncheckedExplicitlyNonSendableKlass) async {
   transferArg(x)
-  // expected-swift-5-warning @-1 {{sending 'x' risks causing data races}}
+  // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-2 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   // expected-swift-6-warning @-3 {{sending 'x' risks causing data races}}
   // expected-swift-6-note @-4 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
@@ -144,7 +144,7 @@ func testNeverTransferExplicit(_ x: PreCUncheckedExplicitlyNonSendableKlass) asy
 
 func testNeverTransferNormal(_ x: PostCUncheckedNonSendableKlass) async {
   transferArg(x)
-  // expected-swift-5-warning @-1 {{sending 'x' risks causing data races}}
+  // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-2 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   // expected-swift-6-error @-3 {{sending 'x' risks causing data races}}
   // expected-swift-6-note @-4 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
@@ -164,7 +164,7 @@ func testNeverTransferInexactMatch(_ x: (PreCUncheckedNonSendableKlass, PreCUnch
 // that the tuple contains explicitly non sendable, we emit a warning.
 func testNeverTransferInexactMatchExplicit(_ x: (PreCUncheckedExplicitlyNonSendableKlass, PreCUncheckedExplicitlyNonSendableKlass)) async {
   transferArg(x)
-  // expected-swift-5-warning @-1 {{sending 'x' risks causing data races}}
+  // expected-swift-5-warning @-1 {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-swift-5-note @-2 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
   // expected-swift-6-warning @-3 {{sending 'x' risks causing data races}}
   // expected-swift-6-note @-4 {{task-isolated 'x' is passed as a 'sending' parameter; Uses in callee may race with later task-isolated uses}}
@@ -322,42 +322,42 @@ extension MyActor {
 // Since this is a swift 6 class, we emit the full error.
 func taskIsolatedCaptureInSendingClosureLiteral(_ x: PostCUncheckedNonSendableKlass) {
   Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
-    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(x) // expected-note {{closure captures 'x' which is accessible to code in the current task}}
   }
 
   takeClosure { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
-    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(x) // expected-note {{closure captures 'x' which is accessible to code in the current task}}
   }
 
   takeClosureAndParam(PostCUncheckedNonSendableKlass()) { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
-    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(x) // expected-note {{closure captures 'x' which is accessible to code in the current task}}
   }
 
   let y = (x, x)
   Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
-    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(y) // expected-note {{closure captures 'y' which is accessible to code in the current task}}
   }
 
   let z = (x, y)
   Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
-    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(y, z) // expected-note @:11 {{closure captures non-Sendable 'y'}}
     // expected-note @-1:14 {{closure captures non-Sendable 'z'}}
   }
 
   let w = PostCUncheckedNonSendableKlassPair(lhs: x, rhs: x)
   Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
-    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(w) // expected-note {{closure captures 'w' which is accessible to code in the current task}}
   }
 
   let u = Pair(lhs: x, rhs: x)
   Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
-    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure}}
+    // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
     print(u) // expected-note {{closure captures 'u' which is accessible to code in the current task}}
   }
 }
@@ -365,42 +365,42 @@ func taskIsolatedCaptureInSendingClosureLiteral(_ x: PostCUncheckedNonSendableKl
 extension MyActor {
   func actorIsolatedCaptureInSendingClosureLiteral(_ x: PostCUncheckedNonSendableKlass) {
     Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
-      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       print(x) // expected-note {{closure captures 'self'-isolated 'x'}}
     }
 
     takeClosure { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
-      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       print(x) // expected-note {{closure captures 'self'-isolated 'x'}}
     }
 
     takeClosureAndParam(PostCUncheckedNonSendableKlass()) { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
-      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       print(x) // expected-note {{closure captures 'self'-isolated 'x'}}
     }
 
     let y = (x, x)
     Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
-      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       print(y) // expected-note {{closure captures 'y' which is accessible to 'self'-isolated code}}
     }
 
     let z = (x, y)
     Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
-      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       print(y, z) // expected-note @:13 {{closure captures non-Sendable 'y'}}
       // expected-note @-1:16 {{closure captures non-Sendable 'z'}}
     }
 
     let w = PostCUncheckedNonSendableKlassPair(lhs: x, rhs: x)
     Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
-      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       print(w) // expected-note {{closure captures 'w' which is accessible to 'self'-isolated code}}
     }
 
     let u = Pair(lhs: x, rhs: x)
     Task { // expected-swift-6-error {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
-      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure}}
+      // expected-swift-5-warning @-1 {{passing closure as a 'sending' parameter risks causing data races between 'self'-isolated code and concurrent execution of the closure; this is an error in the Swift 6 language mode}}
       print(u) // expected-note {{closure captures 'u' which is accessible to 'self'-isolated code}}
     }
   }

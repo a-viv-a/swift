@@ -95,7 +95,7 @@ actor A3: AnyActor {} // expected-warning {{'AnyActor' is deprecated: Use 'any A
 distributed actor DA3: AnyActor {} // expected-warning {{'AnyActor' is deprecated: Use 'any Actor' with 'DistributedActor.asLocalActor' instead}}
 
 class C3: AnyActor { // expected-warning {{'AnyActor' is deprecated: Use 'any Actor' with 'DistributedActor.asLocalActor' instead}}
-  // expected-warning@-1 {{non-final class 'C3' cannot conform to the 'Sendable' protocol}}
+  // expected-warning@-1 {{non-final class 'C3' cannot conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode}}
 }
 
 struct S3: AnyActor { // expected-warning {{'AnyActor' is deprecated: Use 'any Actor' with 'DistributedActor.asLocalActor' instead}}

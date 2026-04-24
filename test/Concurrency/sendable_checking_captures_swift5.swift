@@ -9,10 +9,10 @@ var testLocalCaptures: Int {
   let ns = NonSendable()
 
   @Sendable func localFunc() -> NonSendable {
-    return ns // expected-complete-warning {{capture of 'ns' with non-Sendable type 'NonSendable' in a '@Sendable' local function}}
+    return ns // expected-complete-warning {{capture of 'ns' with non-Sendable type 'NonSendable' in a '@Sendable' local function; this is an error in the Swift 6 language mode}}
   }
 
-  callee { return ns } // expected-complete-warning {{capture of 'ns' with non-Sendable type 'NonSendable' in a '@Sendable' closure}}
+  callee { return ns } // expected-complete-warning {{capture of 'ns' with non-Sendable type 'NonSendable' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
 
   return 3
 }
@@ -20,7 +20,7 @@ var testLocalCaptures: Int {
 struct Bad {
   var c: Int = {
     let ns = NonSendable()
-    callee { return ns } // expected-complete-warning {{capture of 'ns' with non-Sendable type 'NonSendable' in a '@Sendable' closure}}
+    callee { return ns } // expected-complete-warning {{capture of 'ns' with non-Sendable type 'NonSendable' in a '@Sendable' closure; this is an error in the Swift 6 language mode}}
     return 3
   }()
 }

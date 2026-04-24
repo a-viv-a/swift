@@ -4,9 +4,9 @@ func test1(@_inheritActorContext _: @Sendable () async -> Void) {} // Ok
 func test2(@_inheritActorContext(always) _: sending () async -> Void) {} // Ok
 
 func test3(@_inheritActorContext _: () async -> Void) {}
-// expected-warning@-1 {{@_inheritActorContext only applies to 'sending' parameters or parameters with '@Sendable' function types}}
+// expected-warning@-1 {{@_inheritActorContext only applies to 'sending' parameters or parameters with '@Sendable' function types; this will be an error in a future Swift language mode}}
 func test3(@_inheritActorContext _: @Sendable () -> Void) {}
-// expected-warning@-1 {{@_inheritActorContext only applies to '@isolated(any)' parameters or parameters with asynchronous function types}}
+// expected-warning@-1 {{@_inheritActorContext only applies to '@isolated(any)' parameters or parameters with asynchronous function types; this will be an error in a future Swift language mode}}
 
 func test4(@_inheritActorContext _: Int) {}
 // expected-error@-1 {{@_inheritActorContext only applies to parameters with function types (got: 'Int')}}

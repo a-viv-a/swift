@@ -62,12 +62,12 @@ func foo() {}               // expected-note 4 {{'foo()' declared here}}
 func makeAsyncClosuresSynchronously(bop: inout Bop) -> (() async -> Void) {
   return { () async -> Void in
     // Unavailable methods
-    _ = Bop()     // expected-warning@:9{{'init' is unavailable from asynchronous contexts; Use Bop(a: Int) instead}}
+    _ = Bop()     // expected-warning@:9{{initializer 'init' is unavailable from asynchronous contexts; Use Bop(a: Int) instead; this is an error in the Swift 6 language mode}}
     _ = Bop(a: 32)
-    bop.foo()     // expected-warning@:9{{'foo' is unavailable from asynchronous contexts}}
-    bop.muppet()  // expected-warning@:9{{'muppet' is unavailable from asynchronous contexts}}
-    unavailableFunction() // expected-warning@:5{{'unavailableFunction' is unavailable from asynchronous contexts}}
-    noasyncFunction() // expected-warning@:5{{'noasyncFunction' is unavailable from asynchronous contexts}}
+    bop.foo()     // expected-warning@:9{{instance method 'foo' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+    bop.muppet()  // expected-warning@:9{{instance method 'muppet' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+    unavailableFunction() // expected-warning@:5{{global function 'unavailableFunction' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+    noasyncFunction() // expected-warning@:5{{global function 'noasyncFunction' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
 
     // Can use them from synchronous closures
     _ = { Bop() }()
@@ -76,7 +76,7 @@ func makeAsyncClosuresSynchronously(bop: inout Bop) -> (() async -> Void) {
     _ = { noasyncFunction() }()
 
     // Unavailable global function
-    foo()         // expected-warning{{'foo' is unavailable from asynchronous contexts}}
+    foo()         // expected-warning{{global function 'foo' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
 
     // Okay function
     okay()
@@ -88,14 +88,14 @@ func makeAsyncClosuresSynchronously(bop: inout Bop) -> (() async -> Void) {
 func asyncFunc() async { // expected-error{{asynchronous global function 'asyncFunc()' must be available from asynchronous contexts}}
 
   var bop = Bop(a: 32)
-  _ = Bop()     // expected-warning@:7{{'init' is unavailable from asynchronous contexts; Use Bop(a: Int) instead}}
-  bop.foo()     // expected-warning@:7{{'foo' is unavailable from asynchronous contexts}}
-  bop.muppet()  // expected-warning@:7{{'muppet' is unavailable from asynchronous contexts}}
-  unavailableFunction() // expected-warning@:3{{'unavailableFunction' is unavailable from asynchronous contexts}}
-  noasyncFunction() // expected-warning@:3{{'noasyncFunction' is unavailable from asynchronous contexts}}
+  _ = Bop()     // expected-warning@:7{{initializer 'init' is unavailable from asynchronous contexts; Use Bop(a: Int) instead; this is an error in the Swift 6 language mode}}
+  bop.foo()     // expected-warning@:7{{instance method 'foo' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+  bop.muppet()  // expected-warning@:7{{instance method 'muppet' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+  unavailableFunction() // expected-warning@:3{{global function 'unavailableFunction' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+  noasyncFunction() // expected-warning@:3{{global function 'noasyncFunction' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
 
   // Unavailable global function
-  foo()         // expected-warning{{'foo' is unavailable from asynchronous contexts}}
+  foo()         // expected-warning{{global function 'foo' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
 
   // Available function
   okay()
@@ -111,22 +111,22 @@ func asyncFunc() async { // expected-error{{asynchronous global function 'asyncF
 
     _ = { () async -> Void in
       // Check Unavailable things inside of a nested async closure
-      foo()           // expected-warning@:7{{'foo' is unavailable from asynchronous contexts}}
-      bop.foo()       // expected-warning@:11{{'foo' is unavailable from asynchronous contexts}}
-      bop.muppet()    // expected-warning@:11{{'muppet' is unavailable from asynchronous contexts}}
-      _ = Bop()       // expected-warning@:11{{'init' is unavailable from asynchronous contexts; Use Bop(a: Int) instead}}
-      unavailableFunction() // expected-warning@:7{{'unavailableFunction' is unavailable from asynchronous contexts}}
-      noasyncFunction() // expected-warning@:7{{'noasyncFunction' is unavailable from asynchronous contexts}}
+      foo()           // expected-warning@:7{{global function 'foo' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+      bop.foo()       // expected-warning@:11{{instance method 'foo' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+      bop.muppet()    // expected-warning@:11{{instance method 'muppet' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+      _ = Bop()       // expected-warning@:11{{initializer 'init' is unavailable from asynchronous contexts; Use Bop(a: Int) instead; this is an error in the Swift 6 language mode}}
+      unavailableFunction() // expected-warning@:7{{global function 'unavailableFunction' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+      noasyncFunction() // expected-warning@:7{{global function 'noasyncFunction' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
     }
   }
 
   _ = { () async -> Void in
-    _ = Bop()     // expected-warning@:9{{'init' is unavailable from asynchronous contexts; Use Bop(a: Int) instead}}
-    foo()         // expected-warning@:5{{'foo' is unavailable from asynchronous contexts}}
-    bop.foo()     // expected-warning@:9{{'foo' is unavailable from asynchronous contexts}}
-    bop.muppet()  // expected-warning@:9{{'muppet' is unavailable from asynchronous contexts}}
-    unavailableFunction() // expected-warning@:5{{'unavailableFunction' is unavailable from asynchronous contexts}}
-    noasyncFunction() // expected-warning@:5{{'noasyncFunction' is unavailable from asynchronous contexts}}
+    _ = Bop()     // expected-warning@:9{{initializer 'init' is unavailable from asynchronous contexts; Use Bop(a: Int) instead; this is an error in the Swift 6 language mode}}
+    foo()         // expected-warning@:5{{global function 'foo' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+    bop.foo()     // expected-warning@:9{{instance method 'foo' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+    bop.muppet()  // expected-warning@:9{{instance method 'muppet' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+    unavailableFunction() // expected-warning@:5{{global function 'unavailableFunction' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
+    noasyncFunction() // expected-warning@:5{{global function 'noasyncFunction' is unavailable from asynchronous contexts; this is an error in the Swift 6 language mode}}
 
     _ = {
       foo()

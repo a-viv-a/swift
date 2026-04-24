@@ -41,7 +41,7 @@ func takeFnWithoutSendingParam(_ fn: (NonSendableKlass) -> ()) {}
 
 func testFunctionMatching() {
   let _: (NonSendableKlass) -> () = functionWithSendingParameter
-  // expected-warning @-1 {{converting a value of type '(sending NonSendableKlass) -> ()' to type '(NonSendableKlass) -> ()' risks causing data races}}
+  // expected-warning @-1 {{converting a value of type '(sending NonSendableKlass) -> ()' to type '(NonSendableKlass) -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{converting a function typed value with a sending parameter to one without risks allowing actor-isolated values to escape their isolation domain as an argument to an invocation of value}}
   let _: (sending NonSendableKlass) -> () = functionWithSendingParameter
 
@@ -50,7 +50,7 @@ func testFunctionMatching() {
 
   takeFnWithSendingParam(functionWithSendingParameter)
   takeFnWithoutSendingParam(functionWithSendingParameter)
-  // expected-warning @-1 {{converting a value of type '(sending NonSendableKlass) -> ()' to type '(NonSendableKlass) -> ()' risks causing data races}}
+  // expected-warning @-1 {{converting a value of type '(sending NonSendableKlass) -> ()' to type '(NonSendableKlass) -> ()' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{converting a function typed value with a sending parameter to one without risks allowing actor-isolated values to escape their isolation domain as an argument to an invocation of value}}
   takeFnWithSendingParam(functionWithoutSendingParameter)
   takeFnWithoutSendingParam(functionWithoutSendingParameter)
@@ -61,16 +61,16 @@ func testReturnValueMatching() {
   let _: () -> sending NonSendableKlass = functionWithSendingResult
   let _: () -> NonSendableKlass = functionWithoutSendingResult
   let _: () -> sending NonSendableKlass = functionWithoutSendingResult
-  // expected-warning @-1 {{converting a value of type '() -> NonSendableKlass' to type '() -> sending NonSendableKlass' risks causing data races}}
+  // expected-warning @-1 {{converting a value of type '() -> NonSendableKlass' to type '() -> sending NonSendableKlass' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{converting a function typed value without a sending result as one with risks allowing actor-isolated values to escape their isolation domain through a result of an invocation of value}}
 
   takeFnWithSendingResult(functionWithSendingResult)
   takeFnWithSendingResult(functionWithoutSendingResult)
-  // expected-warning @-1 {{converting a value of type '() -> NonSendableKlass' to type '() -> sending NonSendableKlass' risks causing data races}}
+  // expected-warning @-1 {{converting a value of type '() -> NonSendableKlass' to type '() -> sending NonSendableKlass' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{converting a function typed value without a sending result as one with risks allowing actor-isolated values to escape their isolation domain through a result of an invocation of value}}
   let x: () -> NonSendableKlass = { fatalError() }
   takeFnWithSendingResult(x)
-  // expected-warning @-1 {{converting a value of type '() -> NonSendableKlass' to type '() -> sending NonSendableKlass' risks causing data races}}
+  // expected-warning @-1 {{converting a value of type '() -> NonSendableKlass' to type '() -> sending NonSendableKlass' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-2 {{converting a function typed value without a sending result as one with risks allowing actor-isolated values to escape their isolation domain through a result of an invocation of value}}
 
   takeFnWithoutSendingResult(functionWithSendingResult)

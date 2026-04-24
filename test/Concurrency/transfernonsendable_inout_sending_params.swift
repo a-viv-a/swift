@@ -89,7 +89,7 @@ func useInOutSending(_ x: inout sending NonSendableKlass,
 ///////////////////////////////
 
 func testInOutSendingReinit(_ x: inout sending NonSendableKlass) async {
-  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 } // expected-note {{'inout sending' parameter must be reinitialized before function exit with a non-actor-isolated value}}
 
@@ -99,7 +99,7 @@ func testInOutSendingReinit2(_ x: inout sending NonSendableKlass) async {
 }
 
 func testInOutSendingReinit3(_ x: inout sending NonSendableKlass) async throws {
-  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   try throwingFunction() // expected-note {{'inout sending' parameter must be reinitialized before function exit with a non-actor-isolated value}}
@@ -108,7 +108,7 @@ func testInOutSendingReinit3(_ x: inout sending NonSendableKlass) async throws {
 }
 
 func testInOutSendingReinit4(_ x: inout sending NonSendableKlass) async throws {
-  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   do {
@@ -122,7 +122,7 @@ func testInOutSendingReinit4(_ x: inout sending NonSendableKlass) async throws {
 }
 
 func testInOutSendingReinit5(_ x: inout sending NonSendableKlass) async throws {
-  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   do {
@@ -135,7 +135,7 @@ func testInOutSendingReinit5(_ x: inout sending NonSendableKlass) async throws {
 }
 
 func testInOutSendingReinit6(_ x: inout sending NonSendableKlass) async throws {
-  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+  await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
   do {
@@ -149,20 +149,20 @@ actor InOutSendingWrongIsolationActor {
   var ns = NonSendableKlass()
   func testWrongIsolation(_ x: inout sending NonSendableKlass) {
     x = ns
-  } // expected-warning {{'inout sending' parameter 'x' cannot be 'self'-isolated at end of function}}
+  } // expected-warning {{'inout sending' parameter 'x' cannot be 'self'-isolated at end of function; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{'self'-isolated 'x' risks causing races in between 'self'-isolated uses and caller uses since caller assumes value is not actor isolated}}
 
   func testWrongIsolation2(_ x: inout sending NonSendableKlass) {
     let z = ns
     x = z
-  } // expected-warning {{'inout sending' parameter 'x' cannot be 'self'-isolated at end of function}}
+  } // expected-warning {{'inout sending' parameter 'x' cannot be 'self'-isolated at end of function; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{'self'-isolated 'x' risks causing races in between 'self'-isolated uses and caller uses since caller assumes value is not actor isolated}}
 }
 
 @MainActor
 func testWrongIsolationGlobalIsolation(_ x: inout sending NonSendableKlass) {
   x = globalKlass
-} // expected-warning {{'inout sending' parameter 'x' cannot be main actor-isolated at end of function}}
+} // expected-warning {{'inout sending' parameter 'x' cannot be main actor-isolated at end of function; this is an error in the Swift 6 language mode}}
 // expected-note @-1 {{main actor-isolated 'x' risks causing races in between main actor-isolated uses and caller uses since caller assumes value is not actor isolated}}
 
 func passInOutSendingToInOutSending(_ x: inout sending NonSendableKlass) {
@@ -170,9 +170,9 @@ func passInOutSendingToInOutSending(_ x: inout sending NonSendableKlass) {
 }
 
 func passInOutSendingMultipleTimes(_ x: inout NonSendableStruct) {
-  useInOutSending(&x.first, &x.second) // expected-warning {{sending 'x.first' risks causing data races}}
+  useInOutSending(&x.first, &x.second) // expected-warning {{sending 'x.second' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{task-isolated 'x.first' is passed as a 'sending' parameter}}
-  // expected-warning @-2 {{sending 'x.second' risks causing data races}}
+  // expected-warning @-2 {{sending 'x.first' risks causing data races; this is an error in the Swift 6 language mode}}
   // expected-note @-3 {{task-isolated 'x.second' is passed as a 'sending' parameter}}
 }
 
@@ -233,38 +233,38 @@ func multipleInOutSendingParamsInSameRegion3(_ x1: inout sending NonSendableKlas
 //////////////////////////////////////
 
 func returnInOutSendingDirectly(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingRegionLet(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   let y = x
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingRegionVar(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   var y = x
   y = x
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 
 func returnInOutSendingViaHelper(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   let y = x
-  return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+  return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingHelperDirect(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
-  return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+  return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingDirectlyIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   if getBool() {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
   fatalError()
@@ -273,11 +273,11 @@ func returnInOutSendingDirectlyIf(_ x: inout sending NonSendableKlass) -> NonSen
 func returnInOutSendingRegionLetIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   let y = x
   if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   } else {
     print(y)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -286,7 +286,7 @@ func returnInOutSendingRegionVarIf(_ x: inout sending NonSendableKlass) -> NonSe
   var y = x
   y = x
   if getBool() {
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
   fatalError()
@@ -295,20 +295,20 @@ func returnInOutSendingRegionVarIf(_ x: inout sending NonSendableKlass) -> NonSe
 func returnInOutSendingViaHelperIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   let y = x
   if getBool() {
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   } else {
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
 
 func returnInOutSendingHelperDirectIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   if getBool() {
-    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   } else {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -317,11 +317,11 @@ func returnInOutSendingViaHelperVarIf(_ x: inout sending NonSendableKlass) -> No
   var y = x
   y = x
   if getBool() {
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   } else {
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -331,7 +331,7 @@ func returnInOutSendingDirectlyElse(_ x: inout sending NonSendableKlass) -> NonS
     print(x)
     fatalError()
   } else {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -342,7 +342,7 @@ func returnInOutSendingRegionLetElse(_ x: inout sending NonSendableKlass) -> Non
     print(y)
     fatalError()
   } else {
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -354,7 +354,7 @@ func returnInOutSendingRegionVarElse(_ x: inout sending NonSendableKlass, z: Non
     print(y)
     return z
   } else {
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -365,7 +365,7 @@ func returnInOutSendingViaHelperElse(_ x: inout sending NonSendableKlass, _ z: N
     print(y)
     return z
   } else {
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -375,7 +375,7 @@ func returnInOutSendingHelperDirectElse(_ x: inout sending NonSendableKlass, _ z
     print(x)
     return z
   } else {
-    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -387,7 +387,7 @@ func returnInOutSendingViaHelperVarElse(_ x: inout sending NonSendableKlass, _ z
     print(y)
     return z
   } else {
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -395,19 +395,19 @@ func returnInOutSendingViaHelperVarElse(_ x: inout sending NonSendableKlass, _ z
 func returnInOutSendingDirectlyFor(_ x: inout sending NonSendableKlass, _ z: NonSendableKlass) -> NonSendableKlass {
   for _ in 0..<1 {
     if getBool() {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
   print(x)
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingDirectlyFor2(_ x: inout sending NonSendableKlass, _ z: NonSendableKlass) -> NonSendableKlass {
   for _ in 0..<1 {
     if getBool() {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
@@ -419,11 +419,11 @@ func returnInOutSendingRegionLetFor(_ x: inout sending NonSendableKlass) -> NonS
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -431,11 +431,11 @@ func returnInOutSendingRegionLetFor2(_ x: inout sending NonSendableKlass) -> Non
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -443,7 +443,7 @@ func returnInOutSendingRegionLetFor3(_ x: inout sending NonSendableKlass, _ z: N
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
@@ -455,11 +455,11 @@ func returnInOutSendingRegionVarFor(_ x: inout sending NonSendableKlass) -> NonS
   y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -468,11 +468,11 @@ func returnInOutSendingRegionVarFor2(_ x: inout sending NonSendableKlass) -> Non
   y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -481,7 +481,7 @@ func returnInOutSendingRegionVarFor3(_ x: inout sending NonSendableKlass, _ z: N
   y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
@@ -492,12 +492,12 @@ func returnInOutSendingViaHelperFor(_ x: inout sending NonSendableKlass) -> NonS
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
   print(y)
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -505,23 +505,23 @@ func returnInOutSendingViaHelperFor2(_ x: inout sending NonSendableKlass) -> Non
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
   print(y)
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingHelperDirectFor(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   for _ in 0..<1 {
     if getBool() {
-      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -530,22 +530,22 @@ func returnInOutSendingViaHelperVarFor(_ x: inout sending NonSendableKlass) -> N
   y = x
   for _ in 0..<1 {
     if getBool() {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
   print(y)
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingDirectlyGuard(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   guard getBool() else {
     print(x)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -553,10 +553,10 @@ func returnInOutSendingRegionLetGuard(_ x: inout sending NonSendableKlass) -> No
   let y = x
   guard getBool() else {
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -565,10 +565,10 @@ func returnInOutSendingRegionVarGuard(_ x: inout sending NonSendableKlass) -> No
   y = x
   guard getBool() else {
     print(y)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -576,20 +576,20 @@ func returnInOutSendingViaHelperGuard(_ x: inout sending NonSendableKlass) -> No
   let y = x
   guard getBool() else {
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+  return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingHelperDirectGuard(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   guard getBool() else {
     print(x)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+  return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -598,59 +598,59 @@ func returnInOutSendingViaHelperVarGuard(_ x: inout sending NonSendableKlass) ->
   y = x
   guard getBool() else {
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+  return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnInOutSendingViaHelperVar(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
   var y = x
   y = x
-  return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+  return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingDirectly<T>(_ x: inout sending T) -> T {
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingRegionLet<T>(_ x: inout sending T) -> T {
   let y = x
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingRegionVar<T>(_ x: inout sending T) -> T {
   var y = x
   y = x
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingViaHelper<T>(_ x: inout sending T) -> T {
   let y = x
-  return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+  return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingHelperDirect<T>(_ x: inout sending T) -> T {
-  return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+  return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingViaHelperVar<T>(_ x: inout sending T) -> T {
   var y = x
   y = x
-  return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+  return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingDirectlyIf<T>(_ x: inout sending T) -> T {
   if getBool() {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
   fatalError()
@@ -659,11 +659,11 @@ func returnGenericInOutSendingDirectlyIf<T>(_ x: inout sending T) -> T {
 func returnGenericInOutSendingRegionLetIf<T>(_ x: inout sending T) -> T {
   let y = x
   if getBool() {
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   } else {
     print(y)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -672,7 +672,7 @@ func returnGenericInOutSendingRegionVarIf<T>(_ x: inout sending T) -> T {
   var y = x
   y = x
   if getBool() {
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
   fatalError()
@@ -681,20 +681,20 @@ func returnGenericInOutSendingRegionVarIf<T>(_ x: inout sending T) -> T {
 func returnGenericInOutSendingViaHelperIf<T>(_ x: inout sending T) -> T {
   let y = x
   if getBool() {
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   } else {
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
 
 func returnGenericInOutSendingHelperDirectIf<T>(_ x: inout sending T) -> T {
   if getBool() {
-    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   } else {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -703,11 +703,11 @@ func returnGenericInOutSendingViaHelperVarIf<T>(_ x: inout sending T) -> T {
   var y = x
   y = x
   if getBool() {
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   } else {
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -717,7 +717,7 @@ func returnGenericInOutSendingDirectlyElse<T>(_ x: inout sending T) -> T {
     print(x)
     fatalError()
   } else {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -728,7 +728,7 @@ func returnGenericInOutSendingRegionLetElse<T>(_ x: inout sending T) -> T {
     print(y)
     fatalError()
   } else {
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -740,7 +740,7 @@ func returnGenericInOutSendingRegionVarElse<T>(_ x: inout sending T, z: T) -> T 
     print(y)
     return z
   } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -751,7 +751,7 @@ func returnGenericInOutSendingViaHelperElse<T>(_ x: inout sending T, _ z: T) -> 
     print(y)
     return z
   } else {
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -761,7 +761,7 @@ func returnGenericInOutSendingHelperDirectElse<T>(_ x: inout sending T, _ z: T) 
     print(x)
     return z
   } else {
-    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -773,7 +773,7 @@ func returnGenericInOutSendingViaHelperVarElse<T>(_ x: inout sending T, _ z: T) 
     print(y)
     return z
   } else {
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
 }
@@ -781,19 +781,19 @@ func returnGenericInOutSendingViaHelperVarElse<T>(_ x: inout sending T, _ z: T) 
 func returnGenericInOutSendingDirectlyFor<T>(_ x: inout sending T, _ z: T) -> T {
   for _ in 0..<1 {
     if getBool() {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
   print(x)
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingDirectlyFor2<T>(_ x: inout sending T, _ z: T) -> T {
   for _ in 0..<1 {
     if getBool() {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
@@ -805,11 +805,11 @@ func returnGenericInOutSendingRegionLetFor<T>(_ x: inout sending T) -> T {
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -817,11 +817,11 @@ func returnGenericInOutSendingRegionLetFor2<T>(_ x: inout sending T) -> T {
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -829,7 +829,7 @@ func returnGenericInOutSendingRegionLetFor3<T>(_ x: inout sending T, _ z: T) -> 
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
@@ -841,11 +841,11 @@ func returnGenericInOutSendingRegionVarFor<T>(_ x: inout sending T) -> T {
   y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -854,11 +854,11 @@ func returnGenericInOutSendingRegionVarFor2<T>(_ x: inout sending T) -> T {
   y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -867,7 +867,7 @@ func returnGenericInOutSendingRegionVarFor3<T>(_ x: inout sending T, _ z: T) -> 
   y = x
   for _ in 0..<1 {
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
@@ -878,12 +878,12 @@ func returnGenericInOutSendingViaHelperFor<T>(_ x: inout sending T) -> T {
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
   print(y)
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -891,23 +891,23 @@ func returnGenericInOutSendingViaHelperFor2<T>(_ x: inout sending T) -> T {
   let y = x
   for _ in 0..<1 {
     if getBool() {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
   print(y)
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingHelperDirectFor<T>(_ x: inout sending T) -> T {
   for _ in 0..<1 {
     if getBool() {
-      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -916,22 +916,22 @@ func returnGenericInOutSendingViaHelperVarFor<T>(_ x: inout sending T) -> T {
   y = x
   for _ in 0..<1 {
     if getBool() {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
     }
   }
   print(y)
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingDirectlyGuard<T>(_ x: inout sending T) -> T {
   guard getBool() else {
     print(x)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+  return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -939,10 +939,10 @@ func returnGenericInOutSendingRegionLetGuard<T>(_ x: inout sending T) -> T {
   let y = x
   guard getBool() else {
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -951,10 +951,10 @@ func returnGenericInOutSendingRegionVarGuard<T>(_ x: inout sending T) -> T {
   y = x
   guard getBool() else {
     print(y)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return y // expected-warning {{'y' cannot be returned}}
+  return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -962,20 +962,20 @@ func returnGenericInOutSendingViaHelperGuard<T>(_ x: inout sending T) -> T {
   let y = x
   guard getBool() else {
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+  return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
 func returnGenericInOutSendingHelperDirectGuard<T>(_ x: inout sending T) -> T {
   guard getBool() else {
     print(x)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'inout sending' parameter 'x' risks concurrent access as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+  return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -984,10 +984,10 @@ func returnGenericInOutSendingViaHelperVarGuard<T>(_ x: inout sending T) -> T {
   y = x
   guard getBool() else {
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
   }
-  return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+  return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
   // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' and result can be sent to different isolation domains}}
 }
 
@@ -998,7 +998,7 @@ func returnGenericInOutSendingViaHelperVarGuard<T>(_ x: inout sending T) -> T {
 actor ReturnSendingInOutTestActor {
 
   func testInOutSendingReinit(_ x: inout sending NonSendableKlass) async {
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local actor-isolated uses}}
   } // expected-note {{'inout sending' parameter must be reinitialized before function exit with a non-actor-isolated value}}
 
@@ -1008,7 +1008,7 @@ actor ReturnSendingInOutTestActor {
   }
 
   func testInOutSendingReinit3(_ x: inout sending NonSendableKlass) async throws {
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local actor-isolated uses}}
 
 
@@ -1018,7 +1018,7 @@ actor ReturnSendingInOutTestActor {
   }
 
   func testInOutSendingReinit4(_ x: inout sending NonSendableKlass) async throws {
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local actor-isolated uses}}
 
 
@@ -1033,7 +1033,7 @@ actor ReturnSendingInOutTestActor {
   }
 
   func testInOutSendingReinit5(_ x: inout sending NonSendableKlass) async throws {
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local actor-isolated uses}}
 
 
@@ -1047,7 +1047,7 @@ actor ReturnSendingInOutTestActor {
   }
 
   func testInOutSendingReinit6(_ x: inout sending NonSendableKlass) async throws {
-    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToMain(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local actor-isolated uses}}
 
 
@@ -1059,37 +1059,37 @@ actor ReturnSendingInOutTestActor {
   } // expected-note {{'inout sending' parameter must be reinitialized before function exit with a non-actor-isolated value}}
 
   func returnInOutSendingDirectly(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingRegionLet(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     let y = x
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingRegionVar(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     var y = x
     y = x
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingViaHelper(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     let y = x
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingHelperDirect(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
-    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingDirectlyIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     if getBool() {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
     fatalError()
@@ -1098,11 +1098,11 @@ actor ReturnSendingInOutTestActor {
   func returnInOutSendingRegionLetIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     let y = x
     if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     } else {
       print(y)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1111,7 +1111,7 @@ actor ReturnSendingInOutTestActor {
     var y = x
     y = x
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
     fatalError()
@@ -1120,20 +1120,20 @@ actor ReturnSendingInOutTestActor {
   func returnInOutSendingViaHelperIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     let y = x
     if getBool() {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
 
   func returnInOutSendingHelperDirectIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     if getBool() {
-      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     } else {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1142,11 +1142,11 @@ actor ReturnSendingInOutTestActor {
     var y = x
     y = x
     if getBool() {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     } else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1156,7 +1156,7 @@ actor ReturnSendingInOutTestActor {
       print(x)
       fatalError()
     } else {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1167,7 +1167,7 @@ actor ReturnSendingInOutTestActor {
       print(y)
       fatalError()
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1179,7 +1179,7 @@ actor ReturnSendingInOutTestActor {
       print(y)
       return z
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1190,7 +1190,7 @@ actor ReturnSendingInOutTestActor {
       print(y)
       return z
     } else {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1200,7 +1200,7 @@ actor ReturnSendingInOutTestActor {
       print(x)
       return z
     } else {
-      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1212,7 +1212,7 @@ actor ReturnSendingInOutTestActor {
       print(y)
       return z
     } else {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1220,19 +1220,19 @@ actor ReturnSendingInOutTestActor {
   func returnInOutSendingDirectlyFor(_ x: inout sending NonSendableKlass, _ z: NonSendableKlass) -> NonSendableKlass {
     for _ in 0..<1 {
       if getBool() {
-        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
     print(x)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingDirectlyFor2(_ x: inout sending NonSendableKlass, _ z: NonSendableKlass) -> NonSendableKlass {
     for _ in 0..<1 {
       if getBool() {
-        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
@@ -1244,11 +1244,11 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1256,11 +1256,11 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1268,7 +1268,7 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
@@ -1280,11 +1280,11 @@ actor ReturnSendingInOutTestActor {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1293,11 +1293,11 @@ actor ReturnSendingInOutTestActor {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1306,7 +1306,7 @@ actor ReturnSendingInOutTestActor {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
@@ -1317,12 +1317,12 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
     print(y)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1330,23 +1330,23 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingHelperDirectFor(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     for _ in 0..<1 {
       if getBool() {
-        return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+        return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1355,22 +1355,22 @@ actor ReturnSendingInOutTestActor {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingDirectlyGuard(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     guard getBool() else {
       print(x)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1378,10 +1378,10 @@ actor ReturnSendingInOutTestActor {
     let y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1390,10 +1390,10 @@ actor ReturnSendingInOutTestActor {
     y = x
     guard getBool() else {
       print(y)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1401,20 +1401,20 @@ actor ReturnSendingInOutTestActor {
     let y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingHelperDirectGuard(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     guard getBool() else {
       print(x)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1423,59 +1423,59 @@ actor ReturnSendingInOutTestActor {
     y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnInOutSendingViaHelperVar(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     var y = x
     y = x
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingDirectly<T>(_ x: inout sending T) -> T {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingRegionLet<T>(_ x: inout sending T) -> T {
     let y = x
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingRegionVar<T>(_ x: inout sending T) -> T {
     var y = x
     y = x
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingViaHelper<T>(_ x: inout sending T) -> T {
     let y = x
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingHelperDirect<T>(_ x: inout sending T) -> T {
-    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingViaHelperVar<T>(_ x: inout sending T) -> T {
     var y = x
     y = x
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingDirectlyIf<T>(_ x: inout sending T) -> T {
     if getBool() {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
     fatalError()
@@ -1484,11 +1484,11 @@ actor ReturnSendingInOutTestActor {
   func returnGenericInOutSendingRegionLetIf<T>(_ x: inout sending T) -> T {
     let y = x
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     } else {
       print(y)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1497,7 +1497,7 @@ actor ReturnSendingInOutTestActor {
     var y = x
     y = x
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
     fatalError()
@@ -1506,20 +1506,20 @@ actor ReturnSendingInOutTestActor {
   func returnGenericInOutSendingViaHelperIf<T>(_ x: inout sending T) -> T {
     let y = x
     if getBool() {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
 
   func returnGenericInOutSendingHelperDirectIf<T>(_ x: inout sending T) -> T {
     if getBool() {
-      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     } else {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1528,11 +1528,11 @@ actor ReturnSendingInOutTestActor {
     var y = x
     y = x
     if getBool() {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     } else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1542,7 +1542,7 @@ actor ReturnSendingInOutTestActor {
       print(x)
       fatalError()
     } else {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1553,7 +1553,7 @@ actor ReturnSendingInOutTestActor {
       print(y)
       fatalError()
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1565,7 +1565,7 @@ actor ReturnSendingInOutTestActor {
       print(y)
       return z
     } else {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1576,7 +1576,7 @@ actor ReturnSendingInOutTestActor {
       print(y)
       return z
     } else {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1586,7 +1586,7 @@ actor ReturnSendingInOutTestActor {
       print(x)
       return z
     } else {
-      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1598,7 +1598,7 @@ actor ReturnSendingInOutTestActor {
       print(y)
       return z
     } else {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
   }
@@ -1606,19 +1606,19 @@ actor ReturnSendingInOutTestActor {
   func returnGenericInOutSendingDirectlyFor<T>(_ x: inout sending T, _ z: T) -> T {
     for _ in 0..<1 {
       if getBool() {
-        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
     print(x)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingDirectlyFor2<T>(_ x: inout sending T, _ z: T) -> T {
     for _ in 0..<1 {
       if getBool() {
-        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
@@ -1630,11 +1630,11 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1642,11 +1642,11 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1654,7 +1654,7 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
@@ -1666,11 +1666,11 @@ actor ReturnSendingInOutTestActor {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1679,11 +1679,11 @@ actor ReturnSendingInOutTestActor {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1692,7 +1692,7 @@ actor ReturnSendingInOutTestActor {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
@@ -1703,12 +1703,12 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
     print(y)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1716,23 +1716,23 @@ actor ReturnSendingInOutTestActor {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingHelperDirectFor<T>(_ x: inout sending T) -> T {
     for _ in 0..<1 {
       if getBool() {
-        return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+        return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1741,22 +1741,22 @@ actor ReturnSendingInOutTestActor {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
       }
     }
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingDirectlyGuard<T>(_ x: inout sending T) -> T {
     guard getBool() else {
       print(x)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1764,10 +1764,10 @@ actor ReturnSendingInOutTestActor {
     let y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1776,10 +1776,10 @@ actor ReturnSendingInOutTestActor {
     y = x
     guard getBool() else {
       print(y)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1787,20 +1787,20 @@ actor ReturnSendingInOutTestActor {
     let y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
   func returnGenericInOutSendingHelperDirectGuard<T>(_ x: inout sending T) -> T {
     guard getBool() else {
       print(x)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 
@@ -1809,10 +1809,10 @@ actor ReturnSendingInOutTestActor {
     y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
     }
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is 'self'-isolated}}
   }
 }
@@ -1825,7 +1825,7 @@ actor ReturnSendingInOutTestActor {
 class ReturnSendingInOutTestGlobalActorIsolatedClass {
 
   func testInOutSendingReinit(_ x: inout sending NonSendableKlass) async {
-    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
   } // expected-note {{'inout sending' parameter must be reinitialized before function exit with a non-actor-isolated value}}
     // expected-note @-2 {{sending 'x' to global actor 'CustomActor'-isolated global function 'transferToCustom' risks causing data races between global actor 'CustomActor'-isolated and local main actor-isolated uses}}
 
@@ -1835,7 +1835,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   }
 
   func testInOutSendingReinit3(_ x: inout sending NonSendableKlass) async throws {
-    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to global actor 'CustomActor'-isolated global function 'transferToCustom' risks causing data races between global actor 'CustomActor'-isolated and local main actor-isolated uses}}
 
     try throwingFunction() // expected-note {{'inout sending' parameter must be reinitialized before function exit with a non-actor-isolated value}}
@@ -1844,7 +1844,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   }
 
   func testInOutSendingReinit4(_ x: inout sending NonSendableKlass) async throws {
-    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to global actor 'CustomActor'-isolated global function 'transferToCustom' risks causing data races between global actor 'CustomActor'-isolated and local main actor-isolated uses}}
 
     do {
@@ -1858,7 +1858,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   }
 
   func testInOutSendingReinit5(_ x: inout sending NonSendableKlass) async throws {
-    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to global actor 'CustomActor'-isolated global function 'transferToCustom' risks causing data races between global actor 'CustomActor'-isolated and local main actor-isolated uses}}
 
     do {
@@ -1871,7 +1871,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   }
 
   func testInOutSendingReinit6(_ x: inout sending NonSendableKlass) async throws {
-    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races}}
+    await transferToCustom(x) // expected-warning {{sending 'x' risks causing data races; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{sending 'x' to global actor 'CustomActor'-isolated global function 'transferToCustom' risks causing data races between global actor 'CustomActor'-isolated and local main actor-isolated uses}}
 
     do {
@@ -1882,37 +1882,37 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   } // expected-note {{'inout sending' parameter must be reinitialized before function exit with a non-actor-isolated value}}
 
   func returnInOutSendingDirectly(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingRegionLet(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     let y = x
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingRegionVar(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     var y = x
     y = x
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingViaHelper(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     let y = x
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingHelperDirect(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
-    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingDirectlyIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     if getBool() {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
     fatalError()
@@ -1921,11 +1921,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   func returnInOutSendingRegionLetIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     let y = x
     if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     } else {
       print(y)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -1934,7 +1934,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     var y = x
     y = x
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
     fatalError()
@@ -1943,20 +1943,20 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   func returnInOutSendingViaHelperIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     let y = x
     if getBool() {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
 
   func returnInOutSendingHelperDirectIf(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     if getBool() {
-      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     } else {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -1965,11 +1965,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     var y = x
     y = x
     if getBool() {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     } else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -1979,7 +1979,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(x)
       fatalError()
     } else {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -1990,7 +1990,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(y)
       fatalError()
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2002,7 +2002,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(y)
       return z
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2013,7 +2013,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(y)
       return z
     } else {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2023,7 +2023,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(x)
       return z
     } else {
-      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2035,7 +2035,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(y)
       return z
     } else {
-      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+      return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2043,19 +2043,19 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   func returnInOutSendingDirectlyFor(_ x: inout sending NonSendableKlass, _ z: NonSendableKlass) -> NonSendableKlass {
     for _ in 0..<1 {
       if getBool() {
-        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
     print(x)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingDirectlyFor2(_ x: inout sending NonSendableKlass, _ z: NonSendableKlass) -> NonSendableKlass {
     for _ in 0..<1 {
       if getBool() {
-        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
@@ -2067,11 +2067,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2079,11 +2079,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2091,7 +2091,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
@@ -2103,11 +2103,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2116,11 +2116,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2129,7 +2129,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
@@ -2140,12 +2140,12 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
     print(y)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2153,23 +2153,23 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingHelperDirectFor(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     for _ in 0..<1 {
       if getBool() {
-        return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+        return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2178,22 +2178,22 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+        return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingDirectlyGuard(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     guard getBool() else {
       print(x)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2201,10 +2201,10 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2213,10 +2213,10 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     guard getBool() else {
       print(y)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2224,20 +2224,20 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingHelperDirectGuard(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     guard getBool() else {
       print(x)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(x) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2246,59 +2246,59 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnInOutSendingViaHelperVar(_ x: inout sending NonSendableKlass) -> NonSendableKlass {
     var y = x
     y = x
-    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned}}
+    return useNonSendableKlassAndReturn(y) // expected-warning {{result of global function 'useNonSendableKlassAndReturn' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useNonSendableKlassAndReturn' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingDirectly<T>(_ x: inout sending T) -> T {
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingRegionLet<T>(_ x: inout sending T) -> T {
     let y = x
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingRegionVar<T>(_ x: inout sending T) -> T {
     var y = x
     y = x
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingViaHelper<T>(_ x: inout sending T) -> T {
     let y = x
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingHelperDirect<T>(_ x: inout sending T) -> T {
-    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingViaHelperVar<T>(_ x: inout sending T) -> T {
     var y = x
     y = x
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingDirectlyIf<T>(_ x: inout sending T) -> T {
     if getBool() {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
     fatalError()
@@ -2307,11 +2307,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   func returnGenericInOutSendingRegionLetIf<T>(_ x: inout sending T) -> T {
     let y = x
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     } else {
       print(y)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2320,7 +2320,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     var y = x
     y = x
     if getBool() {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
     fatalError()
@@ -2329,20 +2329,20 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   func returnGenericInOutSendingViaHelperIf<T>(_ x: inout sending T) -> T {
     let y = x
     if getBool() {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
 
   func returnGenericInOutSendingHelperDirectIf<T>(_ x: inout sending T) -> T {
     if getBool() {
-      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     } else {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2351,11 +2351,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     var y = x
     y = x
     if getBool() {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     } else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2365,7 +2365,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(x)
       fatalError()
     } else {
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2376,7 +2376,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(y)
       fatalError()
     } else {
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2388,7 +2388,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(y)
       return z
     } else {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2399,7 +2399,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(y)
       return z
     } else {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2409,7 +2409,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(x)
       return z
     } else {
-      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2421,7 +2421,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
       print(y)
       return z
     } else {
-      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+      return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
   }
@@ -2429,19 +2429,19 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
   func returnGenericInOutSendingDirectlyFor<T>(_ x: inout sending T, _ z: T) -> T {
     for _ in 0..<1 {
       if getBool() {
-        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
     print(x)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingDirectlyFor2<T>(_ x: inout sending T, _ z: T) -> T {
     for _ in 0..<1 {
       if getBool() {
-        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+        return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
@@ -2453,11 +2453,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2465,11 +2465,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2477,7 +2477,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
@@ -2489,11 +2489,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2502,11 +2502,11 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2515,7 +2515,7 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return y // expected-warning {{'y' cannot be returned}}
+        return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
@@ -2526,12 +2526,12 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
     print(y)
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2539,23 +2539,23 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     for _ in 0..<1 {
       if getBool() {
-        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingHelperDirectFor<T>(_ x: inout sending T) -> T {
     for _ in 0..<1 {
       if getBool() {
-        return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+        return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2564,22 +2564,22 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     for _ in 0..<1 {
       if getBool() {
-        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+        return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
         // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
       }
     }
     print(y)
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingDirectlyGuard<T>(_ x: inout sending T) -> T {
     guard getBool() else {
       print(x)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+    return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2587,10 +2587,10 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2599,10 +2599,10 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     guard getBool() else {
       print(y)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return y // expected-warning {{'y' cannot be returned}}
+    return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2610,20 +2610,20 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     let y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
   func returnGenericInOutSendingHelperDirectGuard<T>(_ x: inout sending T) -> T {
     guard getBool() else {
       print(x)
-      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned}}
+      return x // expected-warning {{'inout sending' parameter 'x' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'x' risks concurrent access as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(x) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 
@@ -2632,10 +2632,10 @@ class ReturnSendingInOutTestGlobalActorIsolatedClass {
     y = x
     guard getBool() else {
       print(y)
-      return y // expected-warning {{'y' cannot be returned}}
+      return y // expected-warning {{'y' cannot be returned; this is an error in the Swift 6 language mode}}
       // expected-note @-1 {{returning 'y' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
     }
-    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned}}
+    return useValueAndReturnGeneric(y) // expected-warning {{result of global function 'useValueAndReturnGeneric' cannot be returned; this is an error in the Swift 6 language mode}}
     // expected-note @-1 {{returning result of global function 'useValueAndReturnGeneric' risks concurrent access to 'inout sending' parameter 'x' as caller assumes 'x' is not actor-isolated and result is main actor-isolated}}
   }
 }
