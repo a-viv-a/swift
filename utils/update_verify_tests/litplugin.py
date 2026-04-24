@@ -15,17 +15,14 @@ def uvt_lit_plugin(result, test, commands):
     ):
         return None
 
-    prefix = ""
+    prefixes = []
     for i, arg in enumerate(result.command.args):
         if arg == "-verify-additional-prefix":
             if i + 1 >= len(result.command.args):
                 return None
-            if prefix:
-                # can only handle at most 1 additional prefix at the moment
-                return None
-            prefix = result.command.args[i + 1]
+            prefixes.append(result.command.args[i + 1])
 
-    (err, updated_files) = check_expectations(result.stderr.split("\n"), prefix)
+    (err, updated_files) = check_expectations(result.stderr.split("\n"), prefixes)
     if err:
         return err
 

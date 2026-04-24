@@ -23,16 +23,16 @@ class KnownException(Exception):
     pass
 
 
-def parse_error_category(s, prefix):
+def parse_error_category(s, prefixes):
     if "no expected directives found" in s:
         return None
     parts = s.split("diagnostics")
     diag_category = parts[0]
     category_parts = parts[0].strip().strip("'").split("-")
     expected = category_parts[0]
-    if expected != prefix:
+    if expected not in prefixes:
         raise Exception(
-            f"expected prefix '{prefix}', but found '{expected}'. Multiple verify prefixes are not supported."
+            f"expected one of prefixes {prefixes!r}, but found '{expected}'."
         )
     diag_category = category_parts[1]
     if "seen but not expected" in parts[1]:
@@ -233,7 +233,8 @@ expected_expansion_diag_re = re.compile(
 expected_expansion_close_re = re.compile(r"//(\s*)\}\}")
 
 
-def parse_diag(line, filename, prefix, all_prefixes=False):
+def parse_diag(line, filename, prefixes, all_prefixes=False):
+    """`prefixes` may be a string (single prefix) or a list/iterable of strings."""
     s = line.content
     ms = expected_diag_re.findall(s)
     matched_re = expected_diag_re
@@ -267,7 +268,13 @@ def parse_diag(line, filename, prefix, all_prefixes=False):
         ws_braces,
         diag_s,
     ] = ms[0]
-    if check_prefix != prefix and check_prefix != "" and not all_prefixes:
+    if isinstance(prefixes, str):
+        prefixes = [prefixes]
+    if (
+        check_prefix not in prefixes
+        and check_prefix != ""
+        and not all_prefixes
+    ):
         return None
     if not target_line_s or target_line_s == "@":
         target_line_n = 0
@@ -432,7 +439,7 @@ def add_diag(
     return new_diag
 
 
-def remove_dead_diags(lines, prefix):
+def remove_dead_diags(lines, prefixes):
     for line in lines.copy():
         if line not in lines:
             # Already removed by an earlier take(); skip.
@@ -440,8 +447,8 @@ def remove_dead_diags(lines, prefix):
         if not line.diag:
             continue
         if line.diag.category == "expansion":
-            if not line.diag.prefix or line.diag.prefix == prefix:
-                remove_dead_diags(line.diag.nested_lines, prefix)
+            if not line.diag.prefix or line.diag.prefix in prefixes:
+                remove_dead_diags(line.diag.nested_lines, prefixes)
                 if line.diag.nested_lines:
                     line.diag.count = 1
                 else:
@@ -458,6 +465,7 @@ def remove_dead_diags(lines, prefix):
                     other_diag.is_from_source_file
                     or other_diag.count == 0
                     or other_diag.category != line.diag.category
+                    or other_diag.prefix != line.diag.prefix
                 ):
                     continue
                 if other_diag.is_re or line.diag.is_re:
@@ -514,13 +522,17 @@ def error_refers_to_diag(diag_error, diag, target_line_n):
     )
 
 
-def find_other_targeting(lines, orig_lines, is_nested, diag_error, prefix):
+def find_other_targeting(lines, orig_lines, is_nested, diag_error):
+    # Per-error prefix matching: a candidate qualifies if its prefix is empty
+    # or matches the prefix of the error we're trying to pair with. This
+    # keeps directives from one prefix from cross-pairing with errors from
+    # another in multi-prefix files.
     if is_nested:
         other_diags = [
             line.diag
             for line in lines
             if line.diag
-            and (not line.diag.prefix or line.diag.prefix == prefix)
+            and (not line.diag.prefix or line.diag.prefix == diag_error.prefix)
             and error_refers_to_diag(diag_error, line.diag, diag_error.line)
         ]
     else:
@@ -528,14 +540,14 @@ def find_other_targeting(lines, orig_lines, is_nested, diag_error, prefix):
         other_diags = [
             d
             for d in target.targeting_diags
-            if (not d.prefix or d.prefix == prefix)
+            if (not d.prefix or d.prefix == diag_error.prefix)
             and error_refers_to_diag(diag_error, d, target.line_n)
         ]
     return other_diags
 
 
 def update_lines(
-    diag_errors, lines, orig_lines, prefix, filename, nested_context
+    diag_errors, lines, orig_lines, prefixes, filename, nested_context
 ):
     for diag_error in diag_errors:
         if not isinstance(diag_error, NotFoundDiag):
@@ -560,7 +572,7 @@ def update_lines(
         ):
             continue
         other_diags = find_other_targeting(
-            lines, orig_lines, bool(nested_context), diag_error, prefix
+            lines, orig_lines, bool(nested_context), diag_error
         )
         diag = other_diags[0] if other_diags else None
         if diag:
@@ -591,13 +603,13 @@ def update_lines(
                 [diag_error.nested],
                 diag.nested_lines,
                 orig_lines,
-                prefix,
+                prefixes,
                 diag_error.file,
                 diag,
             )
 
 
-def update_test_file(filename, diag_errors, prefix, updated_test_files):
+def update_test_file(filename, diag_errors, prefixes, updated_test_files):
     dprint(f"updating test file {filename}")
     if filename in updated_test_files:
         raise KnownException(f"{filename} already updated, but got new output")
@@ -612,7 +624,7 @@ def update_test_file(filename, diag_errors, prefix, updated_test_files):
     expansion_context = []
     for line in lines:
         dprint(f"parsing line {line.render()}")
-        diag = parse_diag(line, filename, prefix, all_prefixes=True)
+        diag = parse_diag(line, filename, prefixes, all_prefixes=True)
         if diag:
             dprint(f"  parsed diag {diag.render()}")
             line.diag = diag
@@ -628,15 +640,15 @@ def update_test_file(filename, diag_errors, prefix, updated_test_files):
             dprint(f"  no diag")
 
     fold_expansions(lines)
-    update_lines(diag_errors, lines, orig_lines, prefix, filename, None)
-    remove_dead_diags(lines, prefix)
+    update_lines(diag_errors, lines, orig_lines, prefixes, filename, None)
+    remove_dead_diags(lines, prefixes)
     expand_expansions(lines)
     with open(filename, "w") as f:
         for line in lines:
             f.write(line.render())
 
 
-def update_test_files(errors, prefix, unparsed_files):
+def update_test_files(errors, prefixes, unparsed_files):
     errors_by_file = {}
     for error in errors:
         filename = error.file
@@ -648,7 +660,7 @@ def update_test_files(errors, prefix, unparsed_files):
         if filename in unparsed_files:
             continue
         try:
-            update_test_file(filename, diag_errors, prefix, updated_test_files)
+            update_test_file(filename, diag_errors, prefixes, updated_test_files)
         except KnownException as e:
             return (
                 f"Error in update-verify-tests while updating {filename}: {e}",
@@ -787,11 +799,17 @@ class NestedDiag:
 """
 
 
-def check_expectations(tool_output, prefix):
+def check_expectations(tool_output, prefixes):
     """
     The entry point function.
     Called by the stand-alone update-verify-tests.py as well as litplugin.py.
+
+    `prefixes` is a list of `-verify-additional-prefix` values active for
+    the run; pass `[""]` (or `""` for compat) when no additional prefix
+    was used.
     """
+    if isinstance(prefixes, str):
+        prefixes = [prefixes]
     top_level = []
     unparsed_files = set()
     try:
@@ -825,7 +843,7 @@ def check_expectations(tool_output, prefix):
                 extra_lines = tool_output[i + 1 : i + 3]
                 dprint(f"extra lines: {extra_lines}")
                 diag = parse_diag(
-                    Line(extra_lines[0], int(m.group(2))), m.group(1), prefix
+                    Line(extra_lines[0], int(m.group(2))), m.group(1), prefixes
                 )
                 curr.append(
                     NotFoundDiag(
@@ -841,6 +859,17 @@ def check_expectations(tool_output, prefix):
                 dprint(f"unexpected diag: {line.strip()}")
                 extra_lines = tool_output[i + 1 : i + 3]
                 dprint(f"extra lines: {extra_lines}")
+                # For unexpected diagnostics in multi-prefix files we don't
+                # know which prefix the new directive should use; refuse to
+                # synthesize and let the user add it manually.
+                custom_prefixes = {p for p in prefixes if p}
+                if len(custom_prefixes) > 1:
+                    raise KnownException(
+                        f"cannot synthesize new directive for unexpected "
+                        f"diagnostic in a multi-prefix file (active prefixes "
+                        f"{sorted(custom_prefixes)!r}); please add the "
+                        f"directive at {m.group(1)}:{m.group(2)} manually"
+                    )
                 curr.append(
                     ExtraDiag(
                         m.group(1),
@@ -848,7 +877,7 @@ def check_expectations(tool_output, prefix):
                         int(m.group(3)),
                         m.group(4),
                         m.group(5),
-                        prefix,
+                        next(iter(custom_prefixes), ""),
                     )
                 )
             # Create two mirroring mismatches when the compiler reports that the category or diagnostic is incorrect.
@@ -860,7 +889,7 @@ def check_expectations(tool_output, prefix):
                 extra_lines = tool_output[i + 1 : i + 4]
                 dprint(f"extra lines: {extra_lines}")
                 diag = parse_diag(
-                    Line(extra_lines[0], int(m.group(2))), m.group(1), prefix
+                    Line(extra_lines[0], int(m.group(2))), m.group(1), prefixes
                 )
                 curr.append(
                     NotFoundDiag(
@@ -887,7 +916,7 @@ def check_expectations(tool_output, prefix):
                 extra_lines = tool_output[i + 1 : i + 4]
                 dprint(f"extra lines: {extra_lines}")
                 diag = parse_diag(
-                    Line(extra_lines[0], int(m.group(2))), m.group(1), prefix
+                    Line(extra_lines[0], int(m.group(2))), m.group(1), prefixes
                 )
                 assert diag.category == m.group(4)
                 assert extra_lines[2].strip() == m.group(5)
@@ -935,6 +964,6 @@ def check_expectations(tool_output, prefix):
             None,
         )
     if top_level:
-        return update_test_files(top_level, prefix, unparsed_files)
+        return update_test_files(top_level, prefixes, unparsed_files)
     else:
         return ("no mismatching diagnostics found", None)

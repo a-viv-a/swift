@@ -11,8 +11,8 @@ from update_verify_tests.core import check_expectations
  diffs. If inaccurate their count will be updated, or the check removed entirely.
 
  Missing features:
-  - multiple prefixes on the same line (-verify-additional-prefix my-prefix -verify-additional-prefix my-other-prefix)
-  - multiple prefixes on separate RUN lines (RUN: -verify-additional-prefix my-prefix\nRUN: -verify-additional-prefix my-other-prefix)
+  - synthesizing new directives in files using multiple -verify-additional-prefix
+    (existing directives can be updated, but new ones must be added manually)
   - regexes matchers
   - multiple checks targeting the same line are supported, but a line may only contain one check
   - if multiple checks targeting the same line are failing the script is not guaranteed to produce a minimal diff
@@ -25,12 +25,18 @@ from update_verify_tests.core import check_expectations
 Example usage:
   swift-frontend -verify [file] | python3 update-verify-tests.py
   swift-frontend -verify -verify-additional-prefix check- [file] | python3 update-verify-tests.py --prefix check-
+  swift-frontend -verify -verify-additional-prefix a- -verify-additional-prefix b- [file] | python3 update-verify-tests.py --prefix a- --prefix b-
 """
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--prefix", default="", help="The prefix passed to -verify")
+    parser.add_argument(
+        "--prefix",
+        action="append",
+        default=[],
+        help="A -verify-additional-prefix value used by the -verify run. May be passed multiple times.",
+    )
     args = parser.parse_args()
     (err, updated_files) = check_expectations(sys.stdin.readlines(), args.prefix)
     if err:
