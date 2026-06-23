@@ -61,7 +61,7 @@ If you need to send a class that inherits from a non-Sendable superclass, you ha
   class MIDISynth: MIDIDevice {} // inherits Sendable and @MainActor from MIDIDevice
   ```
 
-- If you don't control the superclass, you may conform with `@unchecked Sendable` if you guarantee the safety of the inherited and subclass state yourself:
+- If you don't control the superclass, you may conform with `@unchecked Sendable` if you guarantee the safety of the inherited and subclass state yourself. This is also safe when the superclass does not and will not have mutable state: there is no inherited storage that could be mutated concurrently, so only the subclass's own state needs protection.
 
   ```swift
   class MIDISynth: MIDIDevice, @unchecked Sendable {}
@@ -88,7 +88,7 @@ If you need to send a class that inherits from a non-Sendable superclass, you ha
 
 ## `NSObject`
 
-An exception is made for directly inheriting from `NSObject`. `NSObject` does not and will not expose mutable stored properties, so direct subclasses are allowed to conform to `Sendable` for Objective-C interoperability.
+An exception is made for directly inheriting from `NSObject`. Since `NSObject` does not and will not have mutable state, its direct subclasses fall under the rule above and may conform to `Sendable` for Objective-C interoperability without writing `@unchecked`.
 
 ## See Also
 
