@@ -5598,7 +5598,7 @@ public:
   void cacheResult(std::optional<SemanticAvailabilitySpec> value) const;
 };
 
-/// Gathers the file-level defaults declared by `using ...` at the top of a
+/// Gathers the file-level defaults declared by `using ...` at file scope in a
 /// source file, and diagnoses any issues that would affect results. Other
 /// validation in `visitUsingDecl` instead.
 class FileDefaultsRequest

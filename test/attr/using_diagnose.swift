@@ -2,6 +2,10 @@
 
 // REQUIRES: swift_feature_DefaultIsolationPerFile
 
+func callerBefore() {
+  deprecatedThing() // expected-error {{'deprecatedThing()' is deprecated}}
+}
+
 using @diagnose(DeprecatedDeclaration, as: error)
 
 @available(*, deprecated)

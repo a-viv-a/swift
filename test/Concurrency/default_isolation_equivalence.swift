@@ -6,18 +6,25 @@
 // `@MainActor` explicitly on every top-level declaration (including
 // extensions, which is where it diverges from module-level `-default-isolation
 // MainActor` since SE-0466 carve-outs do not apply at file scope).
+// It should not matter where the default is placed.
 
-// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 5 -disable-availability-checking -module-name equivalence -DFILE_DEFAULT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-5.sil
 // RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 5 -disable-availability-checking -module-name equivalence -DEXPLICIT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/explicit-5.sil
-// RUN: diff %t/file-5.sil %t/explicit-5.sil
+// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 5 -disable-availability-checking -module-name equivalence -DFILE_DEFAULT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-5.sil
+// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 5 -disable-availability-checking -module-name equivalence -DFILE_DEFAULT_BOTTOM %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-5-bottom.sil
+// RUN: diff %t/explicit-5.sil %t/file-5.sil
+// RUN: diff %t/explicit-5.sil %t/file-5-bottom.sil
 
-// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 5 -strict-concurrency=complete -disable-availability-checking -module-name equivalence -DFILE_DEFAULT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-5c.sil
 // RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 5 -strict-concurrency=complete -disable-availability-checking -module-name equivalence -DEXPLICIT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/explicit-5c.sil
-// RUN: diff %t/file-5c.sil %t/explicit-5c.sil
+// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 5 -strict-concurrency=complete -disable-availability-checking -module-name equivalence -DFILE_DEFAULT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-5c.sil
+// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 5 -strict-concurrency=complete -disable-availability-checking -module-name equivalence -DFILE_DEFAULT_BOTTOM %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-5c-bottom.sil
+// RUN: diff %t/explicit-5c.sil %t/file-5c.sil
+// RUN: diff %t/explicit-5c.sil %t/file-5c-bottom.sil
 
-// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 6 -disable-availability-checking -module-name equivalence -DFILE_DEFAULT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-6.sil
 // RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 6 -disable-availability-checking -module-name equivalence -DEXPLICIT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/explicit-6.sil
-// RUN: diff %t/file-6.sil %t/explicit-6.sil
+// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 6 -disable-availability-checking -module-name equivalence -DFILE_DEFAULT %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-6.sil
+// RUN: %target-swift-frontend -enable-experimental-feature DefaultIsolationPerFile -emit-sil -swift-version 6 -disable-availability-checking -module-name equivalence -DFILE_DEFAULT_BOTTOM %s | %{python} %S/Inputs/normalize_sil_uuids.py > %t/file-6-bottom.sil
+// RUN: diff %t/explicit-6.sil %t/file-6.sil
+// RUN: diff %t/explicit-6.sil %t/file-6-bottom.sil
 
 // REQUIRES: concurrency
 // REQUIRES: swift_feature_DefaultIsolationPerFile
@@ -157,3 +164,7 @@ func |><T, U>(value: T, transform: (T) -> U) -> U {
 func concurrentFunc() async {}
 
 nonisolated func nonisolatedFunc() {}
+
+#if FILE_DEFAULT_BOTTOM
+using @MainActor
+#endif

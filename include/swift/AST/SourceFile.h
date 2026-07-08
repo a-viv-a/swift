@@ -36,7 +36,7 @@ class UsingDecl;
 class AvailableAttr;
 enum class DefaultIsolation : uint8_t;
 
-/// The set of `using ...` defaults declared at the top of a source file.
+/// The set of `using ...` defaults declared at file scope in a source file.
 struct FileDefaults {
   struct Isolation {
     DefaultIsolation kind;

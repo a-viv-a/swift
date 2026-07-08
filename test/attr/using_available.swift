@@ -5,6 +5,8 @@
 // REQUIRES: swift_feature_DefaultIsolationPerFile
 
 //--- defaulted.swift
+public func precedingFunc() {}
+
 using @available(*, deprecated, message: "legacy")
 
 public func defaultedFunc() {}
@@ -31,6 +33,7 @@ public func explicitlyDeprecated() {}
 
 //--- caller.swift
 public func uses() {
+  precedingFunc() // expected-warning {{'precedingFunc()' is deprecated: legacy}}
   defaultedFunc() // expected-warning {{'defaultedFunc()' is deprecated: legacy}}
 
   _ = defaultedVar // expected-warning {{'defaultedVar' is deprecated: legacy}}
