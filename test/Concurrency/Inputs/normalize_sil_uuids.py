@@ -1,12 +1,13 @@
-"""Normalize SIL output for stable diffs.
-
-Opened-existential archetypes carry a per-compilation UUID that would prevent
-diffing SIL. Replace each archetype's UUID with a placeholder before diff.
-"""
+"""Normalize per-compilation archetype UUIDs in SIL for stable diffs."""
 
 import re
 import sys
 
-sys.stdout.write(
-    re.sub(r'@opened\("[^"]+"', '@opened("UUID"', sys.stdin.read())
-)
+HEX = r'[0-9A-F]'
+UUID = rf'{HEX}{{8}}-{HEX}{{4}}-{HEX}{{4}}-{HEX}{{4}}-{HEX}{{12}}'
+
+text = sys.stdin.read()
+text = re.sub(rf'@opened\("{UUID}"', '@opened("UUID"', text)
+text = re.sub(rf'@pack_element\("{UUID}"', '@pack_element("UUID"', text)
+text = re.sub(rf'uuid "{UUID}"', 'uuid "UUID"', text)
+sys.stdout.write(text)

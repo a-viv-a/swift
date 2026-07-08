@@ -49,6 +49,19 @@ func asyncFunc() async {
 #if EXPLICIT
 @MainActor
 #endif
+func withDefer() {
+  defer { freeFunc() }
+  freeFunc()
+}
+
+#if EXPLICIT
+@MainActor
+#endif
+func withPack<each T>(_ values: repeat each T) {}
+
+#if EXPLICIT
+@MainActor
+#endif
 class C {
   static let shared = C()
   static func factory() -> C { C() }
@@ -97,6 +110,13 @@ struct S {
 struct Pair<First, Second> {
   var first: First
   var second: Second
+}
+
+#if EXPLICIT
+@MainActor
+#endif
+struct Variadic<each Element> {
+  var elements: (repeat each Element)
 }
 
 #if EXPLICIT
