@@ -9566,6 +9566,8 @@ ArrayRef<VarDecl *> InitAccessorReferencedVariablesRequest::evaluate(
 FileDefaults FileDefaultsRequest::evaluate(Evaluator &evaluator,
                                            const SourceFile *file) const {
   auto &ctx = file->getASTContext();
+  auto mainActor = ctx.getMainActorType();
+
   FileDefaults result;
 
   for (auto item : file->getTopLevelItems()) {
@@ -9604,6 +9606,8 @@ FileDefaults FileDefaultsRequest::evaluate(Evaluator &evaluator,
         continue;
       }
 
+      NominalTypeDecl *invalidNominal = nullptr;
+
       if (auto *custom = dyn_cast<CustomAttr>(attr)) {
         auto type = evaluateOrDefault(
             ctx.evaluator,
@@ -9619,7 +9623,7 @@ FileDefaults FileDefaultsRequest::evaluate(Evaluator &evaluator,
             continue;
           }
 
-          if (type->isEqual(ctx.getMainActorType())) {
+          if (mainActor && type->isEqual(mainActor)) {
             setDefaultIsolation(DefaultIsolation::MainActor);
             continue;
           }
@@ -9631,8 +9635,11 @@ FileDefaults FileDefaultsRequest::evaluate(Evaluator &evaluator,
                                diag::invalid_actor_for_file_isolation, type);
             ctx.Diags.diagnose(attr->getLocation(),
                                diag::invalid_actor_for_file_isolation_note);
+            nominal->diagnose(diag::decl_declared_here, nominal);
             continue;
           }
+
+          invalidNominal = nominal;
         }
         // Not a global actor (some other illegal attribute) so fall through to
         // the generic diagnostic.
@@ -9642,6 +9649,8 @@ FileDefaults FileDefaultsRequest::evaluate(Evaluator &evaluator,
                          diag::using_decl_invalid_attribute, attr);
       ctx.Diags.diagnose(attr->getLocation(),
                          diag::using_decl_invalid_attribute_note);
+      if (invalidNominal)
+        invalidNominal->diagnose(diag::decl_declared_here, invalidNominal);
       // Some invalid attributes like @backDeployed can expand to multiple
       // attrs, all of the same kind; just emit one error.
       break;

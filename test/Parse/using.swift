@@ -44,7 +44,7 @@ using @diagnose(StrictMemorySafety, as: error)
 
 // We have a tailored diagnostic for global actors that aren't MainActor.
 @globalActor
-actor MyActor {
+actor MyActor { // expected-note@:7 {{'MyActor' declared here}}
   static let shared = MyActor()
   using @MyActor
   // expected-error@-1:3 {{declaration is only valid at file scope}}
