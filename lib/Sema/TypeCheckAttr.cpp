@@ -9573,16 +9573,9 @@ FileDefaults FileDefaultsRequest::evaluate(Evaluator &evaluator,
     if (!UD)
       continue;
 
-    std::optional<DeclAttrKind> seen;
+    // Generally there will only be one attribute, but @available is allowed and
+    // can produce multiple.
     for (auto *attr : UD->getSpecifiedAttributes()) {
-      // It shouldn't be possible to get here with multiple attributes (it
-      // shouldn't parse), but make sure. @available can end up being multiple
-      // attributes though.
-      ASSERT((!seen || (seen == DeclAttrKind::Available &&
-                        attr->getKind() == DeclAttrKind::Available)) &&
-             "'using' should only have one specified attribute");
-      seen = attr->getKind();
-
       if (isa<DiagnoseAttr>(attr)) {
         // `@diagnose` is handled via the swift-syntax region tree.
         continue;
@@ -9649,6 +9642,9 @@ FileDefaults FileDefaultsRequest::evaluate(Evaluator &evaluator,
                          diag::using_decl_invalid_attribute, attr);
       ctx.Diags.diagnose(attr->getLocation(),
                          diag::using_decl_invalid_attribute_note);
+      // Some invalid attributes like @backDeployed can expand to multiple
+      // attrs, all of the same kind; just emit one error.
+      break;
     }
   }
 

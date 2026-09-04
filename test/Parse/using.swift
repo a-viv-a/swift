@@ -18,6 +18,22 @@ using @inlinable
 // expected-error@-1 {{'@inlinable' is not valid in a 'using' declaration}}
 // expected-note@-2 {{'using' supports '@MainActor', 'nonisolated', '@available', and '@diagnose'}}
 
+using @backDeployed(before: macOS 13.0)
+// expected-error@-1:8 {{'@backDeployed' is not valid in a 'using' declaration}}
+// expected-note@-2:8 {{'using' supports '@MainActor', 'nonisolated', '@available', and '@diagnose'}}
+
+using @backDeployed(before: macOS 13.0, iOS 16.0)
+// expected-error@-1:8 {{'@backDeployed' is not valid in a 'using' declaration}}
+// expected-note@-2:8 {{'using' supports '@MainActor', 'nonisolated', '@available', and '@diagnose'}}
+
+using @_originallyDefinedIn(module: "Other", macOS 13.0)
+// expected-error@-1:8 {{'@_originallyDefinedIn' is not valid in a 'using' declaration}}
+// expected-note@-2:8 {{'using' supports '@MainActor', 'nonisolated', '@available', and '@diagnose'}}
+
+using @_originallyDefinedIn(module: "Other", macOS 13.0, iOS 16.0)
+// expected-error@-1:8 {{'@_originallyDefinedIn' is not valid in a 'using' declaration}}
+// expected-note@-2:8 {{'using' supports '@MainActor', 'nonisolated', '@available', and '@diagnose'}}
+
 do {
   using // expected-warning {{expression of type 'Int' is unused}}
   @MainActor
