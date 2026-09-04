@@ -9568,23 +9568,10 @@ FileDefaults FileDefaultsRequest::evaluate(Evaluator &evaluator,
   auto &ctx = file->getASTContext();
   FileDefaults result;
 
-  std::optional<Decl *> firstNonImportDecl;
-
-  for (auto *D : file->getTopLevelDecls()) {
-    auto *UD = dyn_cast<UsingDecl>(D);
-    if (!UD) {
-      if (!firstNonImportDecl && !isa<ImportDecl>(D)) {
-        firstNonImportDecl = D;
-      }
+  for (auto item : file->getTopLevelItems()) {
+    auto *UD = dyn_cast_or_null<UsingDecl>(item.dyn_cast<Decl *>());
+    if (!UD)
       continue;
-    }
-
-    if (firstNonImportDecl) {
-      UD->diagnose(diag::using_decl_must_precede_other_decls);
-      firstNonImportDecl.value()->diagnose(
-          diag::using_decl_must_precede_other_decls_previous);
-      // TODO: emit a fix-it
-    }
 
     std::optional<DeclAttrKind> seen;
     for (auto *attr : UD->getSpecifiedAttributes()) {

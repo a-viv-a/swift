@@ -19,9 +19,7 @@
 // REQUIRES: concurrency
 // REQUIRES: swift_feature_DefaultIsolationPerFile
 
-#if FILE_DEFAULT
-using @MainActor
-#endif
+// The using decl is lower in the file to ensure it applies to preceding decls.
 
 #if EXPLICIT
 @MainActor
@@ -62,6 +60,10 @@ class C {
   // Synthetic deinit inherits default isolation but not decl isolation, explicit does not, via SE-0371.
   deinit {}
 }
+
+#if FILE_DEFAULT
+using @MainActor
+#endif
 
 #if EXPLICIT
 @MainActor

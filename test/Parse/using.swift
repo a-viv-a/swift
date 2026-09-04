@@ -18,13 +18,13 @@ using @inlinable
 // expected-error@-1 {{'@inlinable' is not valid in a 'using' declaration}}
 // expected-note@-2 {{'using' supports '@MainActor', 'nonisolated', '@available', and '@diagnose'}}
 
-do { // expected-note 2 {{first non-import declaration here}}
+do {
   using // expected-warning {{expression of type 'Int' is unused}}
   @MainActor
 // expected-error@+1 {{expected declaration}}
 }
 
-using @diagnose(StrictMemorySafety, as: error) // expected-error {{'using' must appear before any non-import declaration}}
+using @diagnose(StrictMemorySafety, as: error)
 
 // We have a tailored diagnostic for global actors that aren't MainActor.
 @globalActor
@@ -35,9 +35,8 @@ actor MyActor {
   // TODO: we don't diagnose nested 'using' misuse since the request doesn't see it.
 }
 
-using @MyActor // expected-error {{'using' must appear before any non-import declaration}}
-// expected-error@-1:7 {{global actor 'MyActor' is not valid in a 'using' declaration}}
-// expected-note@-2:7 {{file-level default isolation must be '@MainActor' or 'nonisolated'}}
+using @MyActor // expected-error@:7 {{global actor 'MyActor' is not valid in a 'using' declaration}}
+// expected-note@-1:7 {{file-level default isolation must be '@MainActor' or 'nonisolated'}}
 
 do {
   using // expected-warning {{expression of type 'Int' is unused}}
