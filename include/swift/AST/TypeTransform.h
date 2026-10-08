@@ -223,7 +223,8 @@ case TypeKind::Id:
         if (parentTy.getPointer() == nominalTy->getParent().getPointer())
           return t;
 
-        return NominalType::get(nominalTy->getDecl(), parentTy, ctx);
+        return NominalType::get(nominalTy->getDecl(), parentTy, ctx,
+                                nominalTy->getScopeArgs());
       }
 
       return t;

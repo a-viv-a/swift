@@ -6782,6 +6782,30 @@ public:
     printTypeDeclName(Ty, NameContext);
   }
 
+  void printScopeRef(ScopeRef scope) {
+    switch (scope.getKind()) {
+    case ScopeRef::Kind::Immortal:
+      Printer << "immortal";
+      return;
+    case ScopeRef::Kind::Param:
+      Printer << "^" << scope.getDepth() << "." << scope.getIndex();
+      return;
+    }
+    llvm_unreachable("unhandled kind");
+  }
+
+  void printScopeArgs(NominalOrBoundGenericNominalType *Ty) {
+    auto *scopes = Ty->getScopeArgs();
+    if (!scopes)
+      return;
+    Printer.printAttrName("@_scoped");
+    Printer << "(";
+    interleave(scopes->getScopes(),
+               [&](ScopeRef scope) { printScopeRef(scope); },
+               [&] { Printer << ", "; });
+    Printer << ") ";
+  }
+
   void visit(Type T, NonRecursivePrintOptions nrOptions = std::nullopt) {
     Printer.printTypePre(TypeLoc::withoutLoc(T));
     SWIFT_DEFER { Printer.printTypePost(TypeLoc::withoutLoc(T)); };
@@ -7108,10 +7132,12 @@ public:
   }
 
   void visitEnumType(EnumType *T, NonRecursivePrintOptions nrOptions) {
+    printScopeArgs(T);
     printQualifiedType(T);
   }
 
   void visitStructType(StructType *T, NonRecursivePrintOptions nrOptions) {
+    printScopeArgs(T);
     printQualifiedType(T);
   }
 

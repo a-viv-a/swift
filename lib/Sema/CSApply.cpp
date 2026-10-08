@@ -7285,6 +7285,10 @@ Expr *ExprRewriter::coerceToType(Expr *expr, Type toType,
           return cs.cacheType(new (ctx) UnsafeCastExpr(expr, toType));
       }
 
+      // TODO: Record the relationship between scopes instead.
+      if (eraseScopes(fromType)->isEqual(eraseScopes(toType)))
+        return cs.cacheType(new (ctx) UnsafeCastExpr(expr, toType));
+
       auto &err = llvm::errs();
       err << "fromType->getCanonicalType() = ";
       fromType->getCanonicalType()->dump(err);
